@@ -36,7 +36,7 @@ def create_comics():
 
 def choose_comics():
     list_comics = [value for value in os.listdir() if Path(value).is_dir()]
-    list_comics.append(os.getenv('EXIT'))
+    list_comics.insert(0, os.getenv('EXIT'))
     choose_comics = pyip.inputMenu(
         list_comics,
         numbered=True,
@@ -47,8 +47,8 @@ def choose_comics():
 
 
 def create_new_chapter():
-    long_number = os.getenv('LONG_NUMBER', '2')
-    long_number = int(long_number) if str(long_number).isdecimal() else 2
+    LONG_NUMBER = os.getenv('LONG_NUMBER', '2')
+    LONG_NUMBER = int(LONG_NUMBER) if str(LONG_NUMBER).isdecimal() else 2
     directories = [
         os.getenv('ORIGINAL', False),
         os.getenv('TRANSLATE', False),
@@ -58,19 +58,30 @@ def create_new_chapter():
     comics = choose_comics()
     if comics == os.getenv('EXIT'):
         return CANCEL
+    repeat = pyip.inputInt(
+        prompt='Сколько частей создать (в случае ошибки, введите 0): ',
+        blank=True,
+        min=0
+    )
+    if not repeat:
+        repeat = '1'
     chapters = [
         chapter for chapter in os.listdir(comics) if chapter not in directories
     ]
-    number = max(chapters) if chapters else '01'
+    number = max(chapters) if chapters else '1'
     if not number.isdecimal():
         number = number.split('_')[0]
         if not number.isdecimal():
-            number = str(len(chapters) + 1)
-    number = number.rjust(long_number, '0')
-    for directory in directories:
-        if directory:
-            path = Path(comics, number, directory)
-            os.makedirs(path)
+            number = len(chapters) + 1
+    number = int(number)
+    for i in range(repeat):
+        number += i
+        long_number = number
+        long_number = long_number.rjust(LONG_NUMBER, '0')
+        for directory in directories:
+            if directory:
+                path = Path(comics, long_number, directory)
+                os.makedirs(path)
     return 'Новая часть и подпапки созданы.'
 
 
