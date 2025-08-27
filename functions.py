@@ -12,26 +12,27 @@ CANCEL = 'Действие отменено.'
 
 
 def create_comics():
-    new_comics = pyip.inputStr(
-        blockRegexes=[
-            r'\.$',
-            r'[<>”\/\\\|\?\*]'
-        ],
-        prompt='Название комикса: '
+    blockRegexes = [
+        ('|'.join(os.listdir()), 'Папка с таким названием уже существует.')
+    ] + [
+        (r'\.$', 'Точка не может стоять в конце.'),
+        (r'[:<>”\/\\\|\?\*]', 'Использованы недопустимые символы.')
+    ]
+    name_new_comic = pyip.inputStr(
+        prompt='Название нового комикса: ',
+        blockRegexes=blockRegexes,
+        blank=True
     )
-    if new_comics == os.getenv('EXIT'):
+    if not name_new_comic:
         return CANCEL
-    try:
-        os.mkdir(new_comics)
-    except FileExistsError:
-        return 'Ошибка: папка с таким именем уже существует.'
     directories = [
-        os.getenv('ORIGINAL', False),
-        os.getenv('TRANSLATE', False)
+        os.getenv('ORIGINAL_COMICS', False),
+        os.getenv('TRANSLATE_COMICS', False)
     ]
     for directory in directories:
         if directory:
-            os.mkdir(Path(new_comics, directory))
+            os.makedirs(Path(name_new_comic, directory))
+    return f'Создана папка для комикса "{name_new_comic}".'
 
 
 def choose_comics():
