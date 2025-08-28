@@ -12,9 +12,12 @@ CANCEL = 'Действие отменено.'
 
 
 def create_comics():
+    directories = [
+        os.getenv('ORIGINAL_COMICS', False),
+        os.getenv('TRANSLATE_COMICS', False)
+    ]
     blockRegexes = [
-        ('|'.join(os.listdir()), 'Папка с таким названием уже существует.')
-    ] + [
+        ('|'.join(os.listdir()), 'Папка с таким названием уже существует.'),
         (r'\.$', 'Точка не может стоять в конце.'),
         (r'[:<>”\/\\\|\?\*]', 'Использованы недопустимые символы.')
     ]
@@ -25,10 +28,6 @@ def create_comics():
     )
     if not name_new_comic:
         return CANCEL
-    directories = [
-        os.getenv('ORIGINAL_COMICS', False),
-        os.getenv('TRANSLATE_COMICS', False)
-    ]
     for directory in directories:
         if directory:
             os.makedirs(Path(name_new_comic, directory))
@@ -37,7 +36,8 @@ def create_comics():
 
 def choose_comics():
     list_comics = [value for value in os.listdir() if Path(value).is_dir()]
-    list_comics.insert(0, os.getenv('EXIT'))
+    if not list_comics:
+        return ''
     choose_comics = pyip.inputMenu(
         list_comics,
         numbered=True,
@@ -49,7 +49,7 @@ def choose_comics():
 
 def create_new_chapter():
     LONG_NUMBER = os.getenv('LONG_NUMBER', '2')
-    LONG_NUMBER = int(LONG_NUMBER) if str(LONG_NUMBER).isdecimal() else 2
+    LONG_NUMBER = int(LONG_NUMBER) if LONG_NUMBER.isdecimal() else 2
     directories = [
         os.getenv('ORIGINAL', False),
         os.getenv('TRANSLATE', False),
@@ -57,33 +57,33 @@ def create_new_chapter():
         os.getenv('TEXT', False),
     ]
     comics = choose_comics()
-    if comics == os.getenv('EXIT'):
+    if not comics:
         return CANCEL
     repeat = pyip.inputInt(
-        prompt='Сколько частей создать (в случае ошибки, введите 0): ',
+        prompt='Сколько частей создать?\n',
         blank=True,
-        min=0
+        min=1
     )
     if not repeat:
-        repeat = '1'
+        return CANCEL
     chapters = [
         chapter for chapter in os.listdir(comics) if chapter not in directories
     ]
-    number = max(chapters) if chapters else '1'
+    number = max(chapters) if chapters else '0'
     if not number.isdecimal():
         number = number.split('_')[0]
         if not number.isdecimal():
-            number = len(chapters) + 1
-    number = int(number)
-    for i in range(repeat):
-        number += i
-        long_number = number
-        long_number = long_number.rjust(LONG_NUMBER, '0')
+            number = len(chapters)
+    number = int(number) + 1
+    for number_chapter in range(number, number + repeat):
+        long_number = str(number_chapter).rjust(LONG_NUMBER, '0')
         for directory in directories:
             if directory:
-                path = Path(comics, long_number, directory)
-                os.makedirs(path)
-    return 'Новая часть и подпапки созданы.'
+                os.makedirs(Path(comics, long_number, directory))
+    if int(repeat) == 1:
+        return 'Новая часть и подпапки созданы.'
+    else:
+        return f'Новые части ({repeat}) и подпапки созданы.'
 
 
 # def extract_image():
