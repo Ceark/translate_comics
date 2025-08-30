@@ -12,7 +12,7 @@ def main():
     BASE_DIR = os.getenv('BASE_DIR', os.getcwd)
     os.chdir(BASE_DIR)
     dict_functions = {
-        'Create comics': functions.create_comics,
+        'Create comics': functions.create_comic,
         'Create new chapter': functions.create_new_chapter,
         'Extract image': functions.extract_image
     }
