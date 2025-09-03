@@ -96,25 +96,29 @@ def extract_image():
         path = Path(comic, chapter, directories['original'])
         if not path.exists():
             continue
-        flag = [False, False]
+        flag = {
+            'file': False,
+            'directory': False
+        }
         for value in os.listdir(path):
             if Path(path, value).is_dir():
                 path_site_dir = Path(path, value)
-                flag[0] = True
+                flag['directory'] = True
             elif Path(path, value).is_file():
                 path_site_file = Path(path, value)
-                flag[0] = True
-        if not (flag[0] and flag[1]):
+                flag['file'] = True
+        if not (flag['directory'] and flag['file']):
             continue
         example_file = open(path_site_file, "r", encoding="utf-8")
         example_soup = bs4.BeautifulSoup(example_file.read(), 'html.parser')
-        elems = example_soup.select('article > img')
-        file_names = [value.get('data-src').split('/')[5].split('?')[0]
-                      for value in elems]
+        elems = example_soup.select(
+            'article > img[class="content__img js-lazy"]'
+        )
+        file_names = [value.attrs['src'].split('/')[-1] for value in elems]
         for index, file in enumerate(file_names):
             format_file = file.split('.')[-1]
             shutil.move(
-                    path_site_dir / file,
-                    path / f'{index + 1}.{format_file}'
-                )
+                path_site_dir / file,
+                path / f'{index + 1}.{format_file}'
+            )
         del (path_site_dir, path_site_file)
