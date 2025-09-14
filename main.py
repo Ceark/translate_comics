@@ -1,26 +1,31 @@
-import os
+from pathlib import Path
+from time import sleep
 
 import pyinputplus as pyip
-from dotenv import load_dotenv
 
-import functions
-
-load_dotenv()
+from custom_class import MainFolder
+from extract_env import BASE_DIR
 
 
 def main():
-    BASE_DIR = os.getenv('BASE_DIR', os.getcwd)
-    os.chdir(BASE_DIR)
+    if not (
+        Path(BASE_DIR).is_absolute()
+        and Path(BASE_DIR).exists()
+    ):
+        print('Неверный адрес BASE_DIR. Завершение работы.')
+        sleep(5)
+    main_dir = MainFolder(BASE_DIR)
     dict_functions = {
-        'Create comics': functions.create_comic,
-        'Create new chapter': functions.create_new_chapter,
-        'Extract image': functions.extract_image
+        'Create comics': main_dir.create_comic,
+        'Add chapter': main_dir.add_chapter,
+        'Extract image': main_dir.extract_image
     }
     while True:
         action = pyip.inputMenu(
             [key for key in dict_functions.keys()],
             numbered=True,
-            prompt='Выберете команду:\n'
+            prompt='Выберете команду:\n',
+            blank=True
         )
         answer = dict_functions[action]()
         print(answer)
