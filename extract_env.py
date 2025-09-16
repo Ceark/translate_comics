@@ -1,12 +1,9 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
-
-BASE_DIR = os.getenv('BASE_DIR')
-
-LENGTH_NUMBER = os.getenv('LENGTH_NUMBER', '2')
 
 
 def directories_comic():
@@ -38,3 +35,40 @@ def directories_chapter():
         if directories[key]
     }
     return directories
+
+
+def base_dir():
+    base_dir = Path(os.getenv('BASE_DIR', ''))
+    if (
+        base_dir.is_absolute()
+        and base_dir.is_dir()
+    ):
+        return base_dir
+    print(
+        'Путь BASE_DIR указан неверно. Возможные причины:'
+        '\n- путь не абсолютен,'
+        '\n- путь не существует,'
+        '\n- путь не ведет к папке.'
+    )
+    return False
+
+
+def length_number():
+    length_number = os.getenv('LENGTH_NUMBER', '2')
+    if (
+        length_number.isdecimal()
+        and len(length_number) < 10
+    ):
+        return int(length_number)
+    print(
+        'Число LENGTH_NUMBER указано неверно. Возможные причины:'
+        '\n- число слишком большое (не больше десяти символов),'
+        '\n- число содержит не только цифры.'
+        "\nВ качестве LENGTH_NUMBER будет использовано число '2'."
+    )
+    return 2
+
+
+BASE_DIR = base_dir()
+
+LENGTH_NUMBER = length_number()
