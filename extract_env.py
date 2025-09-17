@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -6,34 +7,56 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def validate_directories(prepare: dict, type: str):
+    type_dir = {
+        'chapter': 'Подпапки для отдельной части',
+        'comic': 'Подпапки для комикса'
+    }
+    check_set = f'Проверьте файл настроек .env, раздел "{type_dir[type]}".'
+    directories: dict = {}
+    for key in prepare:
+        # Недопустимые в Windows символы
+        if re.search(r'[:<>"\/\\\|\?\*]|\.$', prepare[key]) is not None:
+            print(
+                f'Значение "{prepare[key]}" содержит недопустимые символы. '
+                + check_set
+            )
+            continue
+        # Уникальность значений
+        if prepare[key] in directories.values():
+            print(
+                f'Значение "{prepare[key]}" не уникально, будет использовано'
+                + ' только первое появление. '
+                + check_set
+            )
+            continue
+        directories[key] = prepare[key]
+    return directories
+
+
 def directories_comic():
     """Список имен папок, в которых будут хранится ярлыки."""
-    directories = {
+    prepare = {
         'original': os.getenv('ORIGINAL_COMICS', False),
         'translate': os.getenv('TRANSLATE_COMICS', False),
         'editor': os.getenv('EDITOR_COMICS', False),
         'text': os.getenv('TEXT_COMICS', False),
     }
-    directories = {
-        key: directories[key]
-        for key in directories
-        if directories[key]
-    }
+    directories = validate_directories(prepare, 'comic')
     return directories
 
 
 def directories_chapter():
-    directories = {
+    """Список имен папок внутри части."""
+    prepare = {
         'original': os.getenv('ORIGINAL_CHAPTER', 'Original'),
         'translate': os.getenv('TRANSLATE_CHAPTER', False),
         'editor': os.getenv('EDITOR_CHAPTER', False),
         'text': os.getenv('TEXT_CHAPTER', False),
     }
-    directories = {
-        key: directories[key]
-        for key in directories
-        if directories[key]
-    }
+    directories = validate_directories(prepare, 'chapter')
+    if directories.get('original') is None:
+        directories['original'] = 'Original'
     return directories
 
 
