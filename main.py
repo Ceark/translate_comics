@@ -8,11 +8,8 @@ from extract_env import BASE_DIR
 
 
 def main():
-    if not (
-        Path(BASE_DIR).is_absolute()
-        and Path(BASE_DIR).exists()
-    ):
-        print('Неверный адрес BASE_DIR. Завершение работы.')
+    if not BASE_DIR:
+        print('Завершение работы.')
         sleep(5)
     main_dir = MainFolder(BASE_DIR)
     dict_functions = {
