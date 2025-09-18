@@ -13,17 +13,21 @@ CANCEL = 'Действие отменено.'
 class Comic:
     dir_comic = directories_comic()
     dir_chapters = directories_chapter()
-    length_number = int(LENGTH_NUMBER) if LENGTH_NUMBER.isdecimal() else 2
+    length_number = LENGTH_NUMBER
 
     def __init__(self, path):
         self.path = Path(path)
 
     def self_create(self):
+        """Создание папки комикса."""
         os.mkdir(self.path)
         for directory in self.dir_comic.values():
             os.mkdir(self.path / directory)
 
     def list_chapters(self):
+        """
+        Получить список папок комикса. Файлы и папки для ярлыков исключены.
+        """
         chapters = [
             chapter for chapter in os.listdir(self.path) if (
                 chapter not in self.dir_chapters.values()
@@ -33,6 +37,12 @@ class Comic:
         return chapters
 
     def add_chapter(self, repeat):
+        """
+        Добавить часть.
+        Номер добавленной папки определяется сначала по значению 'max'.
+        Сначала пытается найти число, если не удастся, то использует
+        количество папок.
+        """
         chapters = self.list_chapters()
         number = max(chapters) if chapters else '0'
         if not number.isdecimal():
@@ -67,7 +77,10 @@ class Comic:
                 continue
             # Экстракция изображений
             example_file = open(path_site_file, "r", encoding="utf-8")
-            example_soup = bs4.BeautifulSoup(example_file.read(), 'html.parser')
+            example_soup = bs4.BeautifulSoup(
+                example_file.read(),
+                'html.parser'
+            )
             elems = example_soup.select(
                 'article > img[class="content__img js-lazy"]'
             )

@@ -95,3 +95,7 @@ def length_number():
 BASE_DIR = base_dir()
 
 LENGTH_NUMBER = length_number()
+
+DIR_COMIC = directories_comic()
+
+DIR_CHAPTER = directories_chapter()
