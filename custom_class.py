@@ -59,17 +59,18 @@ class Comic:
     def extract_image(self):
         chapters = self.list_chapters()
         for chapter in chapters:
-            # Поиск файла сайта и папки с содержимым
+            # Поиск файла сайта и папки с содержимым в папке Original
             path = self.path / chapter / self.dir_chapter['original']
             if not path.exists():
-                continue
-            path_site_dir, path_site_file = False, False
-            for value in os.listdir(path):
-                if Path(path, value).is_dir():
-                    path_site_dir = Path(path, value)
-                elif Path(path, value).is_file():
-                    path_site_file = Path(path, value)
-            if not (path_site_dir and path_site_file):
+                path_site_dir, path_site_file = False, False
+                for value in os.listdir(path):
+                    if Path(path, value).is_dir():
+                        path_site_dir = Path(path, value)
+                    elif Path(path, value).is_file():
+                        path_site_file = Path(path, value)
+                if not (path_site_dir and path_site_file):
+                    continue
+            else:
                 continue
             # Экстракция изображений
             example_file = open(path_site_file, "r", encoding="utf-8")
@@ -154,8 +155,8 @@ class MainFolder:
 
     def extract_image(self):
         comic = self.choose_comic()
-        if not comic:
-            return CANCEL
-        comic = Comic(self.path / comic)
-        comic.extract_image()
-        return 'Изображения извлечены.'
+        if comic:
+            comic = Comic(self.path / comic)
+            comic.extract_image()
+            return 'Изображения извлечены.'
+        return CANCEL
