@@ -61,7 +61,7 @@ class Comic:
         for chapter in chapters:
             # Поиск файла сайта и папки с содержимым в папке Original
             path = self.path / chapter / self.dir_chapter['original']
-            if not path.exists():
+            if path.exists():
                 path_site_dir, path_site_file = False, False
                 for value in os.listdir(path):
                     if Path(path, value).is_dir():
@@ -83,10 +83,10 @@ class Comic:
             )
             file_names = [value.attrs['src'].split('/')[-1] for value in elems]
             for index, file in enumerate(file_names):
-                format_file = file.split('.')[-1]
+                format_file = Path(file).suffix
                 shutil.move(
                     path_site_dir / file,
-                    path / f'{index + 1}.{format_file}'
+                    path / f'{index + 1}' / format_file
                 )
 
 
