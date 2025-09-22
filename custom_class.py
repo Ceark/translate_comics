@@ -20,12 +20,9 @@ class Comic:
 
     def self_create(self):
         """Создание папки комикса."""
-        if not self.path.exists():
-            os.mkdir(self.path)
-            for directory in self.dir_comic.values():
-                os.mkdir(self.path / directory)
-        else:
-            print('Папка уже существует.')
+        os.mkdir(self.path)
+        for directory in self.dir_comic.values():
+            os.mkdir(self.path / directory)
 
     def list_chapters(self):
         """
@@ -116,11 +113,11 @@ class MainFolder:
             blockRegexes=blockRegexes,
             blank=True
         )
-        if not name_new_comic:
-            return 'Действие отменено.'
-        comic = Comic(path=self.path / name_new_comic)
-        comic.self_create()
-        return f'Создана папка для комикса "{name_new_comic}".'
+        if name_new_comic:
+            comic = Comic(path=self.path / name_new_comic)
+            comic.self_create()
+            return f'Создана папка для комикса "{name_new_comic}".'
+        return CANCEL
 
     def choose_comic(self):
         list_comics = [
