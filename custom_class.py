@@ -72,40 +72,46 @@ class Comic:
                     continue
             else:
                 continue
+            # Открытие файла
             example_file = open(path_site_file, "r", encoding="utf-8")
             example_soup = bs4.BeautifulSoup(
                 example_file.read(),
                 'html.parser'
             )
+            # Определение, с каким сайтом ведется работа
             link = example_soup.link.attrs['href']
             dict_site = {
-                'tapas': {
-                    'bool': 'tapas' in link,
-                    'selector': 'img[class="content__img js-lazy"]'
-                },
-                'webtoon': {
-                    'bool': 'webtoons' in link,
-                    'selector': 'img[class="_images"]'
-                },
+                'tapas': (
+                    'tapas' in link,
+                    'img[class="content__img js-lazy"]'
+                ),
+                'webtoon': (
+                    'webtoons' in link,
+                    'img[class="_images"]'
+                )
             }
             for value in dict_site:
-                selector = (
-                    dict_site[value]['selector']
-                    if dict_site[value]['bool'] else False
-                )
-                if selector:
+                flag, selector = dict_site[value]
+                if flag:
                     break
+            if not flag:
+                continue
+            # Формирование списка файлов изображений
             elems = example_soup.select(selector)
             file_names = [
                 Path(value.attrs['src']).name for value in elems
             ]
-            pass
-            # for index, file in enumerate(file_names):
-            #     format_file = Path(file).suffix
-            #     shutil.move(
-            #         path_site_dir / file,
-            #         path / f'{index + 1}' / format_file
-            #     )
+            # Экстракция
+            if True in dict_site['tapas']:
+                for index, file in enumerate(file_names, 1):
+                    suffix = Path(file).suffix
+                    if (path_site_dir / file).exists():
+                        shutil.move(
+                            path_site_dir / file,
+                            path / (f'{index}' + suffix)
+                        )
+            elif True in dict_site['webtoon']:
+                pass
 
 
 class MainFolder:
