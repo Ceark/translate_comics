@@ -72,22 +72,40 @@ class Comic:
                     continue
             else:
                 continue
-            # Экстракция изображений
             example_file = open(path_site_file, "r", encoding="utf-8")
             example_soup = bs4.BeautifulSoup(
                 example_file.read(),
                 'html.parser'
             )
-            elems = example_soup.select(
-                'article > img[class="content__img js-lazy"]'
-            )
-            file_names = [value.attrs['src'].split('/')[-1] for value in elems]
-            for index, file in enumerate(file_names):
-                format_file = Path(file).suffix
-                shutil.move(
-                    path_site_dir / file,
-                    path / f'{index + 1}' / format_file
+            link = example_soup.link.attrs['href']
+            dict_site = {
+                'tapas': {
+                    'bool': 'tapas' in link,
+                    'selector': 'img[class="content__img js-lazy"]'
+                },
+                'webtoon': {
+                    'bool': 'webtoons' in link,
+                    'selector': 'img[class="_images"]'
+                },
+            }
+            for value in dict_site:
+                selector = (
+                    dict_site[value]['selector']
+                    if dict_site[value]['bool'] else False
                 )
+                if selector:
+                    break
+            elems = example_soup.select(selector)
+            file_names = [
+                Path(value.attrs['src']).name for value in elems
+            ]
+            pass
+            # for index, file in enumerate(file_names):
+            #     format_file = Path(file).suffix
+            #     shutil.move(
+            #         path_site_dir / file,
+            #         path / f'{index + 1}' / format_file
+            #     )
 
 
 class MainFolder:
