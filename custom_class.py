@@ -4,6 +4,7 @@ from pathlib import Path
 
 import bs4
 import pyinputplus as pyip
+from PIL import Image
 
 from extract_env import DIR_CHAPTER, DIR_COMIC, LENGTH_NUMBER
 
@@ -111,7 +112,24 @@ class Comic:
                             path / (f'{index}' + suffix)
                         )
             elif True in dict_site['webtoon']:
-                pass
+                width, height = 0, 0
+                coordinates = [(width, height)]
+                # Получить кортежи координат
+                for file_name in file_names:
+                    with Image.open(path_site_dir / file_name) as img:
+                        height += img.height
+                        coordinates.append((width, height))
+                # Получить ширину изображения
+                with Image.open(path_site_dir / file_name) as img:
+                    width = img.width
+                # Создание единого изображения
+                with Image.new('RGB', (width, height)) as new_img:
+                    for index, file_name in enumerate(file_names):
+                        with Image.open(path_site_dir / file_name) as img:
+                            copy_img = img.copy()
+                            new_img.paste(copy_img, coordinates[index])
+                            copy_img.close()
+                    new_img.save(path / 'Union.jpg')
 
 
 class MainFolder:
