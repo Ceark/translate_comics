@@ -2,3 +2,4 @@ PyInputPlus==0.2.12
 python-dotenv==1.1.1
 beautifulsoup4==4.13.5
 pillow=11.3.0
+Send2Trash==1.8.3

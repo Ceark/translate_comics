@@ -4,6 +4,7 @@ from pathlib import Path
 
 import bs4
 import pyinputplus as pyip
+import send2trash
 from PIL import Image
 
 from extract_env import DIR_CHAPTER, DIR_COMIC, LENGTH_NUMBER
@@ -60,6 +61,7 @@ class Comic:
     def extract_image(self):
         chapters = self.list_chapters()
         for chapter in chapters:
+            print(f'Обработка папки {chapter}.')
             # Поиск файла сайта и папки с содержимым в папке Original
             path = self.path / chapter / self.dir_chapter['original']
             if path.exists():
@@ -67,7 +69,10 @@ class Comic:
                 for value in os.listdir(path):
                     if Path(path, value).is_dir():
                         path_site_dir = Path(path, value)
-                    elif Path(path, value).is_file():
+                    elif (
+                        Path(path, value).is_file()
+                        and '.htm' in Path(path, value).suffix
+                    ):
                         path_site_file = Path(path, value)
                 if not (path_site_dir and path_site_file):
                     continue
@@ -79,6 +84,7 @@ class Comic:
                 example_file.read(),
                 'html.parser'
             )
+            example_file.close()
             # Определение, с каким сайтом ведется работа
             link = example_soup.link.attrs['href']
             dict_site = {
@@ -129,7 +135,8 @@ class Comic:
                             copy_img = img.copy()
                             new_img.paste(copy_img, coordinates[index])
                             copy_img.close()
-                    new_img.save(path / 'Union.jpg')
+                    new_img.save(path / 'Union.png')
+            send2trash.send2trash([path_site_dir, path_site_file])
 
 
 class MainFolder:
