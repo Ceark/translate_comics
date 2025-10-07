@@ -11,15 +11,15 @@ def main():
     if BASE_DIR:
         main_dir = MainFolder(BASE_DIR)
         dict_functions = {
-            'Create comics': main_dir.create_comic,
-            'Add chapter': main_dir.add_chapter,
-            'Extract image': main_dir.extract_image
+            'Создать комикс': main_dir.create_comic,
+            'Добавить часть': main_dir.add_chapter,
+            'Извлечь изображения': main_dir.extract_image
         }
         while True:
             action = pyip.inputMenu(
                 [key for key in dict_functions.keys()],
                 numbered=True,
-                prompt='Выберете команду:\n',
+                prompt='Выберите команду:\n',
                 blank=True
             )
             if action:
