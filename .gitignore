@@ -1,4 +1,8 @@
 venv
+pyinstaller
+build
+dist
+main.spec
 __pycache__
 .mypy_cache
 .vscode

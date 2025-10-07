@@ -60,32 +60,57 @@ class Comic:
 
     def extract_image(self):
         chapters = self.list_chapters()
+        # Выбор способа экстракции
+        method = pyip.inputMenu(
+            choices=[
+                'Извлечь',
+                'Соединить'
+            ],
+            prompt='Что делать с изображениями:\n',
+            numbered=True
+        )
+        # Обработка
         for chapter in chapters:
-            print(f'Обработка папки {chapter}.')
+            print(f'Обработка папки "{chapter}".')
+            path: Path = self.path / chapter / self.dir_chapter['original']
+
             # Поиск файла сайта и папки с содержимым в папке Original
-            path = self.path / chapter / self.dir_chapter['original']
             if path.exists():
                 path_site_dir, path_site_file = False, False
-                for value in os.listdir(path):
-                    if Path(path, value).is_dir():
-                        path_site_dir = Path(path, value)
-                    elif (
-                        Path(path, value).is_file()
-                        and '.htm' in Path(path, value).suffix
-                    ):
-                        path_site_file = Path(path, value)
+                for file in [
+                    value for value in path.iterdir()
+                    if value.is_file()
+                    and '.htm' in value.suffix
+                ]:
+                    if (path / (file.stem + '_files')).exists():
+                        path_site_dir = path / (file.stem + '_files')
+                        path_site_file = file
+                        break
                 if not (path_site_dir and path_site_file):
+                    print(
+                        f'В {path} нет *.htm-файла или папки с подходящим',
+                        'названием.'
+                    )
                     continue
             else:
+                print(f'Путь {path} не существует. Переход к следующей части.')
                 continue
+
             # Открытие файла
-            example_file = open(path_site_file, "r", encoding="utf-8")
-            example_soup = bs4.BeautifulSoup(
-                example_file.read(),
-                'html.parser'
-            )
-            example_file.close()
-            # Определение, с каким сайтом ведется работа
+            with open(path_site_file, "r", encoding="utf-8") as file:
+                example_soup = bs4.BeautifulSoup(
+                    file.read(),
+                    'html.parser'
+                )
+
+            # Сайт файла
+            if example_soup.link is None:
+                print(
+                    'Не удалось найти тэг сайта.',
+                    f'Попробуйте заново загрузить файл {path_site_file}.',
+                    sep='\n'
+                )
+                continue
             link = example_soup.link.attrs['href']
             dict_site = {
                 'tapas': (
@@ -102,14 +127,24 @@ class Comic:
                 if flag:
                     break
             if not flag:
+                print(f'Нет инструкций для страницы {path_site_file}.')
                 continue
+
             # Формирование списка файлов изображений
             elems = example_soup.select(selector)
             file_names = [
                 Path(value.attrs['src']).name for value in elems
             ]
+            test = [Path(path_site_dir / file).exists() for file in file_names]
+            if False in test:
+                print(
+                    'Изображения, указанные в файле страницы, не найдены.',
+                    'Попробуйте загрузить страницу заново. Пропуск.',
+                    sep='\n'
+                )
+
             # Экстракция
-            if True in dict_site['tapas']:
+            if method == 'Извлечь':
                 for index, file in enumerate(file_names, 1):
                     suffix = Path(file).suffix
                     if (path_site_dir / file).exists():
@@ -117,7 +152,8 @@ class Comic:
                             path_site_dir / file,
                             path / (f'{index}' + suffix)
                         )
-            elif True in dict_site['webtoon']:
+
+            elif method == 'Соединить':
                 width, height = 0, 0
                 coordinates = [(width, height)]
                 # Получить кортежи координат
@@ -207,5 +243,5 @@ class MainFolder:
         if comic:
             comic = Comic(self.path / comic)
             comic.extract_image()
-            return 'Изображения извлечены.'
+            return 'Процесс завершен.'
         return CANCEL
