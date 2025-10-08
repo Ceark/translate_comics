@@ -15,19 +15,21 @@ def validate_directories(prepare: dict, type: str):
     check_set = f'Проверьте файл настроек .env, раздел "{type_dir[type]}".'
     directories: dict = {}
     for key in prepare:
+        if not prepare[key]:
+            continue
         # Недопустимые в Windows символы
         if re.search(r'[:<>"\/\\\|\?\*]|\.$', prepare[key]) is not None:
             print(
-                f'Значение "{prepare[key]}" содержит недопустимые символы. '
-                + check_set
+                f'Значение "{prepare[key]}" содержит недопустимые символы.',
+                check_set
             )
             continue
         # Уникальность значений
         if prepare[key] in directories.values():
             print(
-                f'Значение "{prepare[key]}" не уникально, будет использовано'
-                + ' только первое появление. '
-                + check_set
+                f'Значение "{prepare[key]}" не уникально, будет использовано',
+                'только первое появление.',
+                check_set
             )
             continue
         directories[key] = prepare[key]
