@@ -22,9 +22,8 @@ class Comic:
 
     def self_create(self):
         """Создание папки комикса."""
-        os.mkdir(self.path)
         for directory in self.dir_comic.values():
-            os.mkdir(self.path / directory)
+            (self.path / directory).mkdir()
 
     def list_chapters(self):
         """
@@ -56,7 +55,7 @@ class Comic:
         for number_chapter in range(number, number + repeat):
             long_number = str(number_chapter).rjust(self.length_number, '0')
             for directory in self.dir_chapter.values():
-                os.makedirs(self.path / long_number / directory)
+                (self.path / long_number / directory).mkdir()
 
     def extract_image(self):
         chapters = self.list_chapters()
@@ -207,8 +206,8 @@ class MainFolder:
 
     def choose_comic(self):
         list_comics = [
-            value for value in os.listdir(self.path)
-            if (self.path / value).is_dir()
+            value.name for value in self.path.iterdir()
+            if value.is_dir()
         ]
         if list_comics:
             choose_comic = pyip.inputMenu(
@@ -233,7 +232,7 @@ class MainFolder:
             return CANCEL
         comic = Comic(self.path / comic)
         comic.add_chapter(repeat)
-        if int(repeat) == 1:
+        if repeat == 1:
             return 'Новая часть и подпапки созданы.'
         else:
             return f'Новые части ({repeat}) и подпапки созданы.'
