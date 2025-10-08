@@ -57,17 +57,9 @@ class Comic:
             for directory in self.dir_chapter.values():
                 (self.path / long_number / directory).mkdir()
 
-    def extract_image(self):
+    def extract_image(self, method):
         chapters = self.list_chapters()
-        # Выбор способа экстракции
-        method = pyip.inputMenu(
-            choices=[
-                'Извлечь',
-                'Соединить'
-            ],
-            prompt='Что делать с изображениями:\n',
-            numbered=True
-        )
+
         # Обработка
         for chapter in chapters:
             print(f'Обработка папки "{chapter}".')
@@ -141,6 +133,7 @@ class Comic:
                     'Попробуйте загрузить страницу заново. Пропуск.',
                     sep='\n'
                 )
+                continue
 
             # Экстракция
             if method == 'Извлечь':
@@ -171,6 +164,7 @@ class Comic:
                             new_img.paste(copy_img, coordinates[index])
                             copy_img.close()
                     new_img.save(path / 'Union.png')
+
             send2trash.send2trash([path_site_dir, path_site_file])
 
 
@@ -241,6 +235,14 @@ class MainFolder:
         comic = self.choose_comic()
         if comic:
             comic = Comic(self.path / comic)
-            comic.extract_image()
+            method = pyip.inputMenu(
+                choices=[
+                    'Извлечь',
+                    'Соединить'
+                ],
+                prompt='Что делать с изображениями:\n',
+                numbered=True
+            )
+            comic.extract_image(method)
             return 'Процесс завершен.'
         return CANCEL
