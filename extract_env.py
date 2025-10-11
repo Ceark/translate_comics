@@ -94,6 +94,11 @@ def length_number():
     return 2
 
 
+def delete_file():
+    value = os.getenv('DELETE')
+    return bool(value)
+
+
 BASE_DIR = base_dir()
 
 LENGTH_NUMBER = length_number()
@@ -101,3 +106,5 @@ LENGTH_NUMBER = length_number()
 DIR_COMIC = directories_comic()
 
 DIR_CHAPTER = directories_chapter()
+
+DELETE = delete_file()
