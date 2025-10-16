@@ -7,7 +7,7 @@ import pyinputplus as pyip
 import send2trash
 from PIL import Image
 
-from new_start.extaract_env import ADDITIONAL, DELETE, LENGTH_NUMBER, ORIGINAL
+from extract_env import ADDITIONAL, DELETE, LENGTH_NUMBER, ORIGINAL
 
 CANCEL = 'Действие отменено.'
 
