@@ -7,186 +7,157 @@ import pyinputplus as pyip
 import send2trash
 from PIL import Image
 
-from extract_env import DIR_CHAPTER, DIR_COMIC, LENGTH_NUMBER, DELETE
+from new_start.extaract_env import ADDITIONAL, DELETE, LENGTH_NUMBER, ORIGINAL
 
 CANCEL = 'Действие отменено.'
 
 
 class Comic:
-    dir_comic = DIR_COMIC
-    dir_chapter = DIR_CHAPTER
-    length_number = LENGTH_NUMBER
+    directories = ADDITIONAL + [ORIGINAL]
 
     def __init__(self, path: Path):
         self.path = path
 
     def self_create(self):
-        """Создание папки комикса."""
-        for directory in self.dir_comic.values():
-            (self.path / directory).mkdir()
+        """Создать папку и подпапки для комикса."""
+        for directory in self.directories:
+            (self.path / directory).mkdir(parents=True)
 
     def list_chapters(self):
         """
-        Получить список папок комикса. Файлы и папки для ярлыков исключены.
+        Получить список путей папок комикса, не входящих в число подпапок.
+        Иначе, получить список частей (глав) комикса.
         """
         chapters = [
-            chapter for chapter in os.listdir(self.path)
+            chapter for chapter in self.path.iterdir()
             if (
-                chapter not in self.dir_chapter.values()
-                and (self.path / chapter).is_dir()
+                chapter.name not in self.directories
+                and chapter.is_dir()
             )
         ]
         return chapters
 
     def add_chapter(self, repeat):
-        """
-        Добавить часть.
-        Номер добавленной папки определяется сначала по значению 'max'.
-        Сначала пытается найти число, если не удастся, то использует
-        количество папок.
-        """
         chapters = self.list_chapters()
-        number = max(chapters) if chapters else '0'
-        if not number.isdecimal():
-            number = number.split('_')[0]
-            if not number.isdecimal():
-                number = len(chapters)
+        name = max(chapters).name if chapters else '0'
+        number = ''
+        for symbol in name:
+            if not symbol.isdecimal():
+                break
+            number += symbol
+        if not number:
+            number = len(chapters)
         number = int(number) + 1
         for number_chapter in range(number, number + repeat):
-            long_number = str(number_chapter).rjust(self.length_number, '0')
-            for directory in self.dir_chapter.values():
+            long_number = str(number_chapter).rjust(LENGTH_NUMBER, '0')
+            for directory in self.directories:
                 (self.path / long_number / directory).mkdir(parents=True)
 
     def extract_image(self, method):
-        chapter_error: list[str] = []
-        site_file_none: list[str] = []
-        link_none: list[str] = []
-        not_flag: list[str] = []
-        not_image: list[str] = []
+        def search_dir(folder: Path):
+            site_file, site_dir = False, False
+            for file in [
+                _ for _ in folder.iterdir()
+                if _.is_file()
+                and '.htm' in _.suffix
+            ]:
+                name_dir = file.stem + '_files'
+                if file.with_name(name_dir).exists():
+                    site_dir = file.with_name(name_dir)
+                    site_file = file
+                    break
+            return (site_file, site_dir)
+
+        def identify_site(example_soup: bs4.BeautifulSoup):
+            if example_soup.link is not None:
+                link = example_soup.link.attrs['href']
+                dict_site = {
+                    'tapas': (
+                        'tapas' in link,
+                        'img[class="content__img js-lazy"]'
+                    ),
+                    'webtoon': (
+                        'webtoons' in link,
+                        'img[class="_images"]'
+                    )
+                }
+                for value in dict_site:
+                    flag, selector = dict_site[value]
+                    if flag:
+                        return selector
+                return (False, f'Работа с сайтом {link} не предусмотрена.')
+            return (False, 'В файле сайта отсутсвует тэг <link>.')
+
+        def list_image_files(site_dir: Path, elems):
+            image_path = [
+                site_dir / Path(value.attrs['src']).name for value in elems
+            ]
+            for path in image_path:
+                if not path.exists():
+                    return False
+            return image_path
+
+        def extract(image_path: list[Path], target: Path):
+            for index, file in enumerate(image_path, 1):
+                new_name = file.with_stem(str(index)).name
+                shutil.copy(
+                    file,
+                    target / new_name
+                )
+
+        def unite(image_path: list[Path], target: Path):
+            width, height = 0, 0
+            coordinates = [(width, height)]
+            # Получить кортежи координат
+            for file in image_path:
+                with Image.open(file) as img:
+                    height += img.height
+                    coordinates.append((width, height))
+            # Получить ширину изображения
+            with Image.open(file) as img:
+                width = img.width
+            # Создание единого изображения
+            with Image.new('RGB', (width, height)) as new_img:
+                for index, file in enumerate(image_path):
+                    with Image.open(file) as img:
+                        copy_img = img.copy()
+                        new_img.paste(copy_img, coordinates[index])
+                        copy_img.close()
+                new_img.save(target / 'Union.png')
 
         for chapter in self.list_chapters():
-            path_chapter: Path = (
-                self.path / chapter / self.dir_chapter['original']
-            )
-
-            # Поиск файла сайта и папки с содержимым в папке Original
-            if path_chapter.exists():
-                site_dir, site_file = False, False
-                for file in [
-                    value for value in path_chapter.iterdir()
-                    if value.is_file()
-                    and '.htm' in value.suffix
-                ]:
-                    if (path_chapter / (file.stem + '_files')).exists():
-                        site_dir = path_chapter / (file.stem + '_files')
-                        site_file = file
-                        break
-                if not (site_dir and site_file):
-                    site_file_none.append(chapter)
-                    continue
-            else:
-                chapter_error.append(chapter)
+            original = chapter / ORIGINAL
+            try:
+                site_file, site_dir = search_dir(original)
+            except FileNotFoundError:
+                print(f'В папке {chapter} отсутсвует папка {ORIGINAL}.')
                 continue
-
-            # Открытие файла
+            if not (site_dir and site_file):
+                continue
             with open(site_file, "r", encoding="utf-8") as file:
                 example_soup = bs4.BeautifulSoup(
                     file.read(),
                     'html.parser'
                 )
-
-            # Определить сайт
-            if example_soup.link is None:
-                link_none.append(chapter)
+            selector = identify_site(example_soup)
+            if False in selector:
+                print(selector[1], f'Файл: {site_file}.')
                 continue
-            link = example_soup.link.attrs['href']
-            dict_site = {
-                'tapas': (
-                    'tapas' in link,
-                    'img[class="content__img js-lazy"]'
-                ),
-                'webtoon': (
-                    'webtoons' in link,
-                    'img[class="_images"]'
-                )
-            }
-            for value in dict_site:
-                flag, selector = dict_site[value]
-                if flag:
-                    break
-            if not flag:
-                not_flag.append(chapter)
-                continue
-
-            # Формирование списка файлов изображений
             elems = example_soup.select(selector)
-            image_names = [
-                Path(value.attrs['src']).name for value in elems
-            ]
-            check_image = [
-                Path(site_dir / file).exists() for file in image_names
-            ]
-            if False in check_image:
-                not_image.append(chapter)
-                continue
-
+            image_path = list_image_files(site_dir, elems)
+            if not image_path:
+                print(
+                    f'В папке {site_dir} не хватает некоторых изображений.',
+                    'Пожалуйства, загрузите файл сайта заново.'
+                )
             # Экстракция
-            if method == 'Извлечь':
-                for index, file in enumerate(image_names, 1):
-                    suffix = Path(file).suffix
-                    shutil.move(
-                        site_dir / file,
-                        path_chapter / (f'{index}' + suffix)
-                    )
-            elif method == 'Соединить':
-                width, height = 0, 0
-                coordinates = [(width, height)]
-                # Получить кортежи координат
-                for file in image_names:
-                    with Image.open(site_dir / file) as img:
-                        height += img.height
-                        coordinates.append((width, height))
-                # Получить ширину изображения
-                with Image.open(site_dir / file) as img:
-                    width = img.width
-                # Создание единого изображения
-                with Image.new('RGB', (width, height)) as new_img:
-                    for index, file in enumerate(image_names):
-                        with Image.open(site_dir / file) as img:
-                            copy_img = img.copy()
-                            new_img.paste(copy_img, coordinates[index])
-                            copy_img.close()
-                    new_img.save(path_chapter / 'Union.png')
-
-            # Удаление файлов
+            action = {
+                'Извлечь': extract,
+                'Соеденить': unite
+            }
+            action[method](image_path, original)
             if DELETE:
                 send2trash.send2trash([site_dir, site_file])
-
-        if chapter_error:
-            print(
-                f'В главах {", ".join(chapter_error)} отсутсвует',
-                f'папка {self.dir_chapter["original"]}.'
-            )
-        if site_file_none:
-            print(
-                f'В главах {", ".join(site_file_none)} отсутсвует файл сайта.'
-            )
-        if link_none:
-            print(
-                f'В главах {", ".join(link_none)} файл сайта повреждён,',
-                'отсутсвует тэг <link>.'
-            )
-        if not_flag:
-            print(
-                f'Для глав {", ".join(not_flag)} отсутсвует алгоритм',
-                'обработки файлов. Доступна обработка для сайтов ',
-                '"Tapas" и "WebToon".'
-            )
-        if not_image:
-            print(
-                f'В главах {", ".join(not_image)} отсутсвуют изображения',
-                'указанные в файле сайта. Попробуйте загрузить сайт заново.'
-            )
 
 
 class MainFolder:
@@ -232,7 +203,7 @@ class MainFolder:
                 blank=True
             )
             return choose_comic
-        return ''
+        return False
 
     def add_chapter(self):
         comic = self.choose_comic()

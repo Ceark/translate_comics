@@ -7,59 +7,27 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def validate_directories(prepare: dict, type: str):
-    type_dir = {
-        'chapter': 'Подпапки для отдельной части',
-        'comic': 'Подпапки для комикса'
+def validate(word):
+    if not re.search(r'[:<>"\/\\\|\?\*]|\.$', word):
+        return True
+    return False
+
+
+def original_directory():
+    original = os.getenv('ORIGINAL_COMICS').strip()
+    if validate(original):
+        return original
+    return 'Original'
+
+
+def additional_directories():
+    original = original_directory()
+    directories = {
+        string.strip() for string
+        in os.getenv('ADDITIONAL_FOLDERS').split(',')
+        if not string == original
     }
-    check_set = f'Проверьте файл настроек .env, раздел "{type_dir[type]}".'
-    directories: dict = {}
-    for key in prepare:
-        if not prepare[key]:
-            continue
-        # Недопустимые в Windows символы
-        if re.search(r'[:<>"\/\\\|\?\*]|\.$', prepare[key]) is not None:
-            print(
-                f'Значение "{prepare[key]}" содержит недопустимые символы.',
-                check_set
-            )
-            continue
-        # Уникальность значений
-        if prepare[key] in directories.values():
-            print(
-                f'Значение "{prepare[key]}" не уникально, будет использовано',
-                'только первое появление.',
-                check_set
-            )
-            continue
-        directories[key] = prepare[key]
-    return directories
-
-
-def directories_comic():
-    """Список имен папок, в которых будут хранится ярлыки."""
-    prepare = {
-        'original': os.getenv('ORIGINAL_COMICS', False),
-        'translate': os.getenv('TRANSLATE_COMICS', False),
-        'editor': os.getenv('EDITOR_COMICS', False),
-        'text': os.getenv('TEXT_COMICS', False),
-    }
-    directories = validate_directories(prepare, 'comic')
-    return directories
-
-
-def directories_chapter():
-    """Список имен папок внутри части."""
-    prepare = {
-        'original': os.getenv('ORIGINAL_CHAPTER', 'Original'),
-        'translate': os.getenv('TRANSLATE_CHAPTER', False),
-        'editor': os.getenv('EDITOR_CHAPTER', False),
-        'text': os.getenv('TEXT_CHAPTER', False),
-    }
-    directories = validate_directories(prepare, 'chapter')
-    if directories.get('original') is None:
-        directories['original'] = 'Original'
-    return directories
+    return list(directories)
 
 
 def base_dir():
@@ -86,25 +54,28 @@ def length_number():
     ):
         return int(length_number)
     print(
-        'Число LENGTH_NUMBER указано неверно. Возможные причины:'
-        '\n- число слишком большое (не больше десяти символов),'
-        '\n- число содержит не только цифры.'
-        "\nВ качестве LENGTH_NUMBER будет использовано число '2'."
+        'Число LENGTH_NUMBER указано неверно. Возможные причины:',
+        '- число слишком большое (не больше десяти символов);',
+        '- число содержит не только цифры.',
+        'В качестве LENGTH_NUMBER будет использовано число 2.',
+        sep='\n'
     )
     return 2
 
 
 def delete_file():
     value = os.getenv('DELETE')
-    return bool(value)
+    if value.isdecimal():
+        return bool(value)
+    return False
 
 
 BASE_DIR = base_dir()
 
 LENGTH_NUMBER = length_number()
 
-DIR_COMIC = directories_comic()
+ORIGINAL = original_directory()
 
-DIR_CHAPTER = directories_chapter()
+ADDITIONAL = additional_directories()
 
 DELETE = delete_file()
