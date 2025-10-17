@@ -74,11 +74,11 @@ class Comic:
                 dict_site = {
                     'tapas': (
                         'tapas' in link,
-                        'img[class="content__img js-lazy"]'
+                        'article[class="viewer__body js-episode-article main__body"]'
                     ),
                     'webtoon': (
                         'webtoons' in link,
-                        'img[class="_images"]'
+                        'div[class="viewer_img _img_viewer_area"]'
                     )
                 }
                 for value in dict_site:
@@ -140,20 +140,24 @@ class Comic:
                     'html.parser'
                 )
             selector = identify_site(example_soup)
-            if False in selector:
+            if isinstance(selector, tuple):
                 print(selector[1], f'Файл: {site_file}.')
                 continue
-            elems = example_soup.select(selector)
+            elems = [
+                i for i in example_soup.select(selector)[0].children
+                if not i == '\n'
+            ]
             image_path = list_image_files(site_dir, elems)
             if not image_path:
                 print(
                     f'В папке {site_dir} не хватает некоторых изображений.',
-                    'Пожалуйства, загрузите файл сайта заново.'
+                    'Пожалуйста, загрузите файл сайта заново.'
                 )
+                continue
             # Экстракция
             action = {
                 'Извлечь': extract,
-                'Соеденить': unite
+                'Соединить': unite
             }
             action[method](image_path, original)
             if DELETE:
