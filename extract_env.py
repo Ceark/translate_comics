@@ -66,7 +66,7 @@ def length_number():
 def delete_file():
     value = os.getenv('DELETE')
     if value.isdecimal():
-        return bool(value)
+        return bool(int(value))
     return False
 
 
