@@ -14,7 +14,7 @@ def validate(word):
 
 
 def original_directory():
-    original = os.getenv('ORIGINAL_COMICS').strip()
+    original = os.getenv('ORIGINAL').strip()
     if validate(original):
         return original
     return 'Original'
