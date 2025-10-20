@@ -21,15 +21,18 @@ class Comic:
 
     def self_create(self):
         """Создать папку и подпапки для комикса."""
+
         for directory in self.directories:
             (self.path / directory).mkdir(parents=True)
 
     def list_chapters(self):
         """
-        Получить список путей папок комикса, не входящих в число подпапок и в
-        начале имени которых есть число.
-        Иначе, получить список частей (глав) комикса.
+        Получить список путей глав комикса.
+
+        Главой комикса является любая папка, имя которой начинается с числа,
+        не входит в список self.directories.
         """
+
         chapters = [
             chapter for chapter in self.path.iterdir()
             if (
@@ -45,6 +48,7 @@ class Comic:
         Принимает строку и возвращает строку, состояющую из первых чисел
         полученной строки.
         """
+
         number = ''
         for symbol in name:
             if not symbol.isdecimal():
@@ -52,18 +56,31 @@ class Comic:
             number += symbol
         return number
 
-    def add_chapter(self, repeat):
+    def add_chapter(self, repeat: int):
+        """
+        Добивить нумерованную часть.
+
+        Определят часть с самым большим номером после чего создает часть
+        с номером +1. Параметр "repeat" - количество добавленных частей.
+        """
+
         chapters = self.list_chapters()
         name = max(chapters).name if chapters else '0'
-        number = self.number_chapter(name)
-        number = int(number) + 1
+        number = int(self.number_chapter(name)) + 1
         for number_chapter in range(number, number + repeat):
             long_number = str(number_chapter).rjust(LENGTH_NUMBER, '0')
             for directory in self.directories:
                 (self.path / long_number / directory).mkdir(parents=True)
 
     def extract_image(self, method):
+        """Извлекает и объединяет изображения из папки комикса."""
+
         def search_dir(folder: Path):
+            """
+            Перебирает файлы .htm и, если рядом с файлом есть папка
+            с подходящим названием, возвращает их пути.
+            """
+
             site_file, site_dir = False, False
             for file in [
                 _ for _ in folder.iterdir()
@@ -78,6 +95,13 @@ class Comic:
             return (site_file, site_dir)
 
         def identify_site(example_soup: bs4.BeautifulSoup):
+            """
+            Функия опознает сайт и возвращет подходящий селектор.
+
+            Опозанание происходит по первому тэгу <link>. Если тэг отсутсвует
+            или опозание не удалось, возвращает кортеж с текстом ошибки.
+            """
+
             if example_soup.link is not None:
                 link = example_soup.link.attrs['href']
                 dict_site = {
@@ -94,10 +118,15 @@ class Comic:
                     flag, selector = dict_site[value]
                     if flag:
                         return selector
-                return (False, f'Работа с сайтом {link} не предусмотрена.')
-            return (False, 'В файле сайта отсутсвует тэг <link>.')
+                return (f'Работа с сайтом {link} не предусмотрена.',)
+            return ('В файле сайта отсутсвует тэг <link>.',)
 
         def list_image_files(site_dir: Path, elems):
+            """
+            Составить список путей файлов изображений комикса.
+            Если какое-то изображение не сущесвует, вернет False.
+            """
+
             image_path = [
                 site_dir / Path(value.attrs['src']).name for value in elems
             ]
@@ -107,6 +136,8 @@ class Comic:
             return image_path
 
         def extract(image_path: list[Path], target: Path):
+            """Функция для копирования файла изображения в заданную папку."""
+
             for index, file in enumerate(image_path, 1):
                 new_name = file.with_stem(str(index)).name
                 shutil.copy(
@@ -115,6 +146,13 @@ class Comic:
                 )
 
         def unite(image_path: list[Path], target: Path):
+            """
+            Функция для вертикального объединения изображений.
+
+            Прежполагается, что первое изображение - самое широкое. Будет
+            создано изображение Union.png в целевой папке.
+            """
+
             width, height = 0, 0
             coordinates = [(width, height)]
             # Получить кортежи координат
@@ -150,11 +188,11 @@ class Comic:
                 )
             selector = identify_site(example_soup)
             if isinstance(selector, tuple):
-                print(selector[1], f'Файл: {site_file}.')
+                print(selector[0], f'Файл: {site_file}.')
                 continue
             elems = [
-                i for i in example_soup.select(selector)[0].children
-                if not i == '\n'
+                child for child in example_soup.select(selector)[0].children
+                if not child == '\n'
             ]
             image_path = list_image_files(site_dir, elems)
             if not image_path:
@@ -172,8 +210,17 @@ class Comic:
             if DELETE:
                 send2trash.send2trash([site_dir, site_file])
 
-    def create_shortcut(self, folder_name):
+    def create_shortcut(self, folder_name: str):
+        """
+        Создание ярлыков для файлов папки с указанными именем.
+
+        Если передано пустое значение, то будут обработаны файлы,
+        не упакованные в папки.
+        """
+
         def shortcut(target_path: str, shortcut_path: str, working_dir: str):
+            """Функция создания ярлыка."""
+
             shell = Dispatch('WScript.Shell')
             shortcut = shell.CreateShortCut(shortcut_path)
             shortcut.Targetpath = target_path
