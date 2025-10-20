@@ -6,6 +6,7 @@ import bs4
 import pyinputplus as pyip
 import send2trash
 from PIL import Image
+from win32com.client import Dispatch
 
 from extract_env import ADDITIONAL, DELETE, LENGTH_NUMBER, ORIGINAL
 
@@ -25,28 +26,36 @@ class Comic:
 
     def list_chapters(self):
         """
-        Получить список путей папок комикса, не входящих в число подпапок.
+        Получить список путей папок комикса, не входящих в число подпапок и в
+        начале имени которых есть число.
         Иначе, получить список частей (глав) комикса.
         """
         chapters = [
             chapter for chapter in self.path.iterdir()
             if (
                 chapter.name not in self.directories
+                and chapter.name[0].isdecimal()
                 and chapter.is_dir()
             )
         ]
         return chapters
 
-    def add_chapter(self, repeat):
-        chapters = self.list_chapters()
-        name = max(chapters).name if chapters else '0'
+    def number_chapter(self, name: str):
+        """
+        Принимает строку и возвращает строку, состояющую из первых чисел
+        полученной строки.
+        """
         number = ''
         for symbol in name:
             if not symbol.isdecimal():
                 break
             number += symbol
-        if not number:
-            number = len(chapters)
+        return number
+
+    def add_chapter(self, repeat):
+        chapters = self.list_chapters()
+        name = max(chapters).name if chapters else '0'
+        number = self.number_chapter(name)
         number = int(number) + 1
         for number_chapter in range(number, number + repeat):
             long_number = str(number_chapter).rjust(LENGTH_NUMBER, '0')
@@ -163,6 +172,38 @@ class Comic:
             if DELETE:
                 send2trash.send2trash([site_dir, site_file])
 
+    def create_shortcut(self, folder_name):
+        def shortcut(target_path: str, shortcut_path: str, working_dir: str):
+            shell = Dispatch('WScript.Shell')
+            shortcut = shell.CreateShortCut(shortcut_path)
+            shortcut.Targetpath = target_path
+            shortcut.WorkingDirectory = working_dir
+            shortcut.save()
+
+        shortcut_folder = (
+            self.path / folder_name if folder_name else self.path / 'Разное'
+        )
+        shortcut_folder.mkdir(exist_ok=True)
+        for chapter in self.list_chapters():
+            path_folder = self.path / chapter / folder_name
+            if path_folder.exists():
+                files = [
+                    file for file in path_folder.iterdir()
+                    if file.is_file()
+                ]
+                for file in files:
+                    number = self.number_chapter(chapter.name) + '_'
+                    shortcut_path = str(
+                        shortcut_folder / (number + file.stem + '.lnk')
+                    )
+                    working_dir = str(file.parent)
+                    target_path = str(file)
+                    shortcut(
+                        target_path=target_path,
+                        shortcut_path=shortcut_path,
+                        working_dir=working_dir
+                    )
+
 
 class MainFolder:
     def __init__(self, path: Path):
@@ -241,4 +282,27 @@ class MainFolder:
             )
             comic.extract_image(method)
             return 'Процесс завершен.'
+        return CANCEL
+
+    def create_shortcut(self):
+        comic = self.choose_comic()
+        if comic:
+            comic = Comic(self.path / comic)
+            word_folder = 'Для файлов в подпапке'
+            choices = [
+                value.name for value in comic.path.iterdir()
+                if value.name in comic.directories
+            ] + [word_folder]
+            while True:
+                folder = pyip.inputMenu(
+                    choices=choices,
+                    prompt='Для файлов какой подпапки создать ярлыки?\n',
+                    blank=True,
+                    numbered=True
+                )
+                if folder:
+                    folder = '' if folder == word_folder else folder
+                    comic.create_shortcut(folder)
+                else:
+                    break
         return CANCEL
