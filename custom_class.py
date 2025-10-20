@@ -325,17 +325,19 @@ class MainFolder:
                     'Соединить'
                 ],
                 prompt='Что делать с изображениями:\n',
-                numbered=True
+                numbered=True,
+                blank=True
             )
-            comic.extract_image(method)
-            return 'Процесс завершен.'
+            if method:
+                comic.extract_image(method)
+                return 'Процесс завершен.'
         return CANCEL
 
     def create_shortcut(self):
         comic = self.choose_comic()
         if comic:
             comic = Comic(self.path / comic)
-            word_folder = 'Для файлов в подпапке'
+            word_folder = 'Для файлов папки'
             choices = [
                 value.name for value in comic.path.iterdir()
                 if value.name in comic.directories
