@@ -12,7 +12,8 @@ def main():
         dict_functions = {
             'Создать комикс': main_dir.create_comic,
             'Добавить часть': main_dir.add_chapter,
-            'Извлечь изображения': main_dir.extract_image
+            'Извлечь изображения': main_dir.extract_image,
+            'Создать ярлыки': main_dir.create_shortcut
         }
         while True:
             action = pyip.inputMenu(
