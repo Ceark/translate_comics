@@ -10,7 +10,7 @@ from win32com.client import Dispatch
 
 from extract_env import ADDITIONAL, DELETE, LENGTH_NUMBER, ORIGINAL
 
-CANCEL = 'Действие отменено.'
+CANCEL = 'Действие отменено.\n-----'
 
 
 class Comic:
