@@ -25,6 +25,7 @@ def main():
             if action:
                 answer = dict_functions[action]()
                 print(answer)
+                print('------')
             else:
                 break
     print('Завершение работы.')

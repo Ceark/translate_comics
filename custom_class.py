@@ -10,7 +10,7 @@ from win32com.client import Dispatch
 
 from extract_env import ADDITIONAL, DELETE, LENGTH_NUMBER, ORIGINAL
 
-CANCEL = 'Действие отменено.\n-----'
+CANCEL = 'Действие отменено.'
 
 
 class Comic:
@@ -232,6 +232,7 @@ class Comic:
         )
         shortcut_folder.mkdir(exist_ok=True)
         for chapter in self.list_chapters():
+            number = self.number_chapter(chapter.name) + '_'
             path_folder = self.path / chapter / folder_name
             if path_folder.exists():
                 files = [
@@ -239,7 +240,6 @@ class Comic:
                     if file.is_file()
                 ]
                 for file in files:
-                    number = self.number_chapter(chapter.name) + '_'
                     shortcut_path = str(
                         shortcut_folder / (number + file.stem + '.lnk')
                     )
@@ -259,10 +259,6 @@ class MainFolder:
     def create_comic(self):
         blockRegexes = [
             (
-                '|'.join(os.listdir(self.path)),
-                'Папка с таким названием уже существует.'
-            ),
-            (
                 r'\.$',
                 'Точка не может стоять в конце названия папки.'
             ),
@@ -271,6 +267,13 @@ class MainFolder:
                 'В названии папки использованы недопустимые символы.'
             )
         ]
+        if os.listdir(self.path):
+            blockRegexes.append(
+                (
+                    '|'.join(os.listdir(self.path)),
+                    'Папка с таким названием уже существует.'
+                )
+            )
         name_new_comic = pyip.inputStr(
             prompt='Название нового комикса: ',
             blockRegexes=blockRegexes,
