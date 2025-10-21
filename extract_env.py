@@ -79,8 +79,7 @@ if not load_dotenv():
             'DELETE = 0'
         )
         print('Файл настроек создан. Вы можете изменить их через Блокнот.')
-        file.close()
-        load_dotenv()
+    load_dotenv()
 
 BASE_DIR = base_dir()
 
