@@ -4,8 +4,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 
 def validate(word):
     if not re.search(r'[:<>"\/\\\|\?\*]|\.$', word):
@@ -14,7 +12,7 @@ def validate(word):
 
 
 def original_directory():
-    original = os.getenv('ORIGINAL').strip()
+    original = os.getenv('ORIGINAL', '').strip()
     if validate(original):
         return original
     return 'Original'
@@ -24,7 +22,7 @@ def additional_directories():
     original = original_directory()
     directories = {
         string.strip() for string
-        in os.getenv('ADDITIONAL_FOLDERS').split(',')
+        in os.getenv('ADDITIONAL_FOLDERS', '').split(',')
         if not string == original
     }
     return list(directories)
@@ -64,11 +62,25 @@ def length_number():
 
 
 def delete_file():
-    value = os.getenv('DELETE')
+    value = os.getenv('DELETE', '')
     if value.isdecimal():
         return bool(int(value))
     return False
 
+
+if not load_dotenv():
+    with open('.env', 'w', encoding='utf-8') as file:
+        base = input('Абсолютный путь к папке для BASE_DIR:\n')
+        file.write(
+            f'BASE_DIR = {base}\n\n'
+            'ORIGINAL = Original\n\n'
+            'ADDITIONAL_FOLDERS = \n\n'
+            'LENGTH_NUMBER = 2\n\n'
+            'DELETE = 0'
+        )
+        print('Файл настроек создан. Вы можете изменить их через Блокнот.')
+        file.close()
+        load_dotenv()
 
 BASE_DIR = base_dir()
 
