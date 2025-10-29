@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+from typing import List
 
 import bs4
 import pyinputplus as pyip
@@ -82,44 +83,70 @@ class Comic:
             """
 
             site_file, site_dir = False, False
-            for file in [
-                _ for _ in folder.iterdir()
-                if _.is_file()
-                and '.htm' in _.suffix
-            ]:
-                name_dir = file.stem + '_files'
-                if file.with_name(name_dir).exists():
-                    site_dir = file.with_name(name_dir)
-                    site_file = file
-                    break
+            if folder.exists():
+                for file in [
+                    _ for _ in folder.iterdir()
+                    if _.is_file()
+                    and '.htm' in _.suffix
+                ]:
+                    name_dir = file.stem + '_files'
+                    if file.with_name(name_dir).exists():
+                        site_dir = file.with_name(name_dir)
+                        site_file = file
+                        break
             return (site_file, site_dir)
 
-        def identify_site(example_soup: bs4.BeautifulSoup):
+        def image_names(example_soup: bs4.BeautifulSoup):
             """
-            Функия опознает сайт и возвращет подходящий селектор.
+            Функия опознает сайт и извлекает список имен файлов.
 
             Опозанание происходит по первому тэгу <link>. Если тэг отсутсвует
             или опозание не удалось, возвращает кортеж с текстом ошибки.
             """
+            def tapas_webtoons(
+                example_soup: bs4.BeautifulSoup,
+                selector: str,
+                tag: str,
+                symbol: str
+            ):
+                elems = [
+                    child for child
+                    in example_soup.select(selector)[0].children
+                    if not child == '\n'
+                ]
+                elems = [
+                    Path(value.attrs[tag]).name.partition(symbol)[0]
+                    for value in elems
+                ]
+                return elems
 
             if example_soup.link is not None:
                 link = example_soup.link.attrs['href']
-                dict_site = {
-                    'tapas': (
-                        'tapas' in link,
-                        'article[class="viewer__body js-episode-article main__body"]'
-                    ),
-                    'webtoon': (
-                        'webtoons' in link,
-                        'div[class="viewer_img _img_viewer_area"]'
-                    )
+                websites = {
+                    'tapas': {
+                        'function': tapas_webtoons,
+                        'parameters': {
+                            'selector': 'article[class="viewer__body js-episode-article main__body"]',
+                            'tag': 'data-src',
+                            'symbol': '*'
+                        }
+                    },
+                    'webtoons': {
+                        'function': tapas_webtoons,
+                        'parameters': {
+                            'selector': 'div[class="viewer_img _img_viewer_area"]',
+                            'tag': 'data-url',
+                            'symbol': '?'
+                        }
+                    }
                 }
-                for value in dict_site:
-                    flag, selector = dict_site[value]
-                    if flag:
-                        return selector
-                return (f'Работа с сайтом {link} не предусмотрена.',)
-            return ('В файле сайта отсутсвует тэг <link>.',)
+                for site in websites:
+                    if site in link:
+                        parameters = websites[site]['parameters']
+                        func = websites[site]['function']
+                        elems = func(example_soup, **parameters)
+                        return elems
+                return False
 
         def list_image_files(site_dir: Path, elems):
             """
@@ -128,14 +155,14 @@ class Comic:
             """
 
             image_path = [
-                site_dir / Path(value.attrs['src']).name for value in elems
+                site_dir / value for value in elems
             ]
             for path in image_path:
                 if not path.exists():
                     return False
             return image_path
 
-        def extract(image_path: list[Path], target: Path):
+        def extract(image_path: List[Path], target: Path):
             """Функция для копирования файла изображения в заданную папку."""
 
             for index, file in enumerate(image_path, 1):
@@ -145,7 +172,7 @@ class Comic:
                     target / new_name
                 )
 
-        def unite(image_path: list[Path], target: Path):
+        def unite(image_path: List[Path], target: Path):
             """
             Функция для вертикального объединения изображений.
 
@@ -174,41 +201,28 @@ class Comic:
 
         for chapter in self.list_chapters():
             original = chapter / ORIGINAL
-            try:
-                site_file, site_dir = search_dir(original)
-            except FileNotFoundError:
-                print(f'В папке {chapter} отсутсвует папка {ORIGINAL}.')
-                continue
-            if not (site_dir and site_file):
-                continue
-            with open(site_file, "r", encoding="utf-8") as file:
-                example_soup = bs4.BeautifulSoup(
-                    file.read(),
-                    'html.parser'
-                )
-            selector = identify_site(example_soup)
-            if isinstance(selector, tuple):
-                print(selector[0], f'Файл: {site_file}.')
-                continue
-            elems = [
-                child for child in example_soup.select(selector)[0].children
-                if not child == '\n'
-            ]
-            image_path = list_image_files(site_dir, elems)
-            if not image_path:
-                print(
-                    f'В папке {site_dir} не хватает некоторых изображений.',
-                    'Пожалуйста, загрузите файл сайта заново.'
-                )
-                continue
-            # Экстракция
-            action = {
-                'Извлечь': extract,
-                'Соединить': unite
-            }
-            action[method](image_path, original)
-            if DELETE:
-                send2trash.send2trash([site_dir, site_file])
+            site_file, site_dir = search_dir(original)
+            if site_dir and site_file:
+                with open(site_file, "r", encoding="utf-8") as file:
+                    example_soup = bs4.BeautifulSoup(
+                        file.read(),
+                        'html.parser'
+                    )
+                elems = image_names(example_soup)
+                image_path = list_image_files(site_dir, elems)
+                if image_path:
+                    action = {
+                        'Извлечь': extract,
+                        'Соединить': unite
+                    }
+                    action[method](image_path, original)
+                    if DELETE:
+                        send2trash.send2trash([site_dir, site_file])
+                else:
+                    print(
+                        f'В папке {site_dir} не хватает некоторых изображений.',
+                        'Пожалуйста, загрузите файл сайта заново.'
+                    )
 
     def create_shortcut(self, folder_name: str):
         """
