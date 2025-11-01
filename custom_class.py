@@ -166,7 +166,7 @@ class Comic:
             """Функция для копирования файла изображения в заданную папку."""
 
             for index, file in enumerate(image_path, 1):
-                new_name = file.with_stem(str(index)).name
+                new_name: str = str(index) + file.suffix
                 shutil.copy(
                     file,
                     target / new_name
