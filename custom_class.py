@@ -109,16 +109,19 @@ class Comic:
                 tag: str,
                 symbol: str
             ):
-                elems = [
-                    child for child
-                    in example_soup.select(selector)[0].children
-                    if not child == '\n'
-                ]
-                elems = [
-                    Path(value.attrs[tag]).name.partition(symbol)[0]
-                    for value in elems
-                ]
-                return elems
+                parts = example_soup.select(selector)
+                if parts:
+                    elems = [
+                        child for child
+                        in parts[0].children
+                        if not child == '\n'
+                    ]
+                    elems = [
+                        Path(value.attrs[tag]).name.partition(symbol)[0]
+                        for value in elems
+                    ]
+                    return elems
+                return []
 
             if example_soup.link is not None:
                 link = example_soup.link.attrs['href']
