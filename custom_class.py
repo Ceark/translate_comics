@@ -9,13 +9,14 @@ import send2trash
 from PIL import Image
 from win32com.client import Dispatch
 
-from extract_env import ADDITIONAL, DELETE, LENGTH_NUMBER, ORIGINAL
+from extract_env import (ADDITIONAL, DELETE, EDITOR, LENGTH_NUMBER, ORIGINAL,
+                         TRANSLATE)
 
 CANCEL = 'Действие отменено.'
 
 
 class Comic:
-    directories = ADDITIONAL + [ORIGINAL]
+    directories = ADDITIONAL + [ORIGINAL, EDITOR, TRANSLATE]
 
     def __init__(self, path: Path):
         self.path = path
@@ -30,8 +31,8 @@ class Comic:
         """
         Получить список путей глав комикса.
 
-        Главой комикса является любая папка, имя которой начинается с числа,
-        не входит в список self.directories.
+        Главой комикса является любая папка, имя которой начинается с числа
+        и не входит в список self.directories.
         """
 
         chapters = [
@@ -47,7 +48,7 @@ class Comic:
     def number_chapter(self, name: str):
         """
         Принимает строку и возвращает строку, состояющую из первых чисел
-        полученной строки.
+        полученной Зстроки.
         """
 
         number = ''
@@ -74,96 +75,102 @@ class Comic:
                 (self.path / long_number / directory).mkdir(parents=True)
 
     def extract_image(self, method):
-        """Извлекает и объединяет изображения из папки комикса."""
+        """Извлекает и объединяет изображения из части комикса."""
 
-        def search_dir(folder: Path):
+        def search_file(chapter: Path):
             """
-            Перебирает файлы .htm и, если рядом с файлом есть папка
-            с подходящим названием, возвращает их пути.
+            Перебирает файлы папки в поисках .htm-файла и, если рядом с ним
+            есть папка с подходящим названием, возвращает их пути,
+            файл и папку.
             """
-
-            site_file, site_dir = False, False
-            if folder.exists():
+            for directory, folders, files in chapter.walk():
                 for file in [
-                    _ for _ in folder.iterdir()
-                    if _.is_file()
-                    and '.htm' in _.suffix
+                    Path(file) for file
+                    in files
+                    if '.htm' in Path(file).suffix
                 ]:
-                    name_dir = file.stem + '_files'
-                    if file.with_name(name_dir).exists():
-                        site_dir = file.with_name(name_dir)
-                        site_file = file
-                        break
-            return (site_file, site_dir)
+                    site_file = directory / file
+                    site_dir = directory / (file.stem + '_files')
+                    if site_dir.exists():
+                        return (site_file, site_dir)
+            return (False, False)
 
         def image_names(example_soup: bs4.BeautifulSoup):
             """
-            Функия опознает сайт и извлекает список имен файлов.
+            Функция для извлечения списка имен файлов.
 
-            Опозанание происходит по первому тэгу <link>. Если тэг отсутсвует
-            или опозание не удалось, возвращает кортеж с текстом ошибки.
+            После опознания сайта по <link> передает в подфунцкию (используют
+            ли разные сайты разный подход?) файл и параметры.
             """
-            def tapas_webtoons(
+            def extract_one(
                 example_soup: bs4.BeautifulSoup,
-                selector: str,
+                selectors: list[str],
                 tag: str,
                 symbol: str
             ):
-                parts = example_soup.select(selector)
-                if parts:
-                    elems = [
-                        child for child
-                        in parts[0].children
-                        if not child == '\n'
-                    ]
-                    elems = [
-                        Path(value.attrs[tag]).name.partition(symbol)[0]
-                        for value in elems
-                    ]
-                    return elems
-                return []
+                for selector in selectors:
+                    parts = example_soup.select(selector)
+                    if parts:
+                        elems: list[str] = [
+                            child.attrs[tag] for child
+                            in parts[0].children
+                            if isinstance(child, bs4.element.Tag)
+                        ]
+                        elems = [
+                            Path(value).name.partition(symbol)[0]
+                            for value in elems
+                        ]
+                        return elems
+                    return []
 
-            if example_soup.link is not None:
+            if example_soup.link:
                 link = example_soup.link.attrs['href']
-                websites = {
-                    'tapas': {
-                        'function': tapas_webtoons,
-                        'parameters': {
-                            'selector': 'article[class="viewer__body js-episode-article main__body"]',
-                            'tag': 'data-src',
-                            'symbol': '*'
-                        }
+                tapas = [
+                    'article[class="viewer__body js-episode-article main__body"]',
+                    'article[class="viewer__body js-episode-article main__body hidden js-mature-content"]'
+                ]
+                webtoons = [
+                    'div[class="viewer_img _img_viewer_area"]'
+                ]
+                name_sites = {
+                    'tapas': 'tapas',
+                    'webtoons': 'webtoons'
+                }
+                parameters = {
+                    name_sites['tapas']: {
+                        'selectors': tapas,
+                        'tag': 'data-src',
+                        'symbol': '*'
                     },
-                    'webtoons': {
-                        'function': tapas_webtoons,
-                        'parameters': {
-                            'selector': 'div[class="viewer_img _img_viewer_area"]',
-                            'tag': 'data-url',
-                            'symbol': '?'
-                        }
+                    name_sites['webtoons']: {
+                        'selectors': webtoons,
+                        'tag': 'data-url',
+                        'symbol': '?'
                     }
                 }
-                for site in websites:
+                func = {
+                    name_sites['tapas']: extract_one,
+                    name_sites['webtoons']: extract_one
+                }
+                for site in name_sites:
                     if site in link:
-                        parameters = websites[site]['parameters']
-                        func = websites[site]['function']
-                        elems = func(example_soup, **parameters)
+                        elems = func[site](example_soup, **parameters[site])
                         return elems
-                return False
+            return False
 
-        def list_image_files(site_dir: Path, elems):
+        def list_image_files(site_dir: Path, elems: list[str]):
             """
-            Составить список путей файлов изображений комикса.
+            Фунцкия составляет список путей файлов изображений комикса.
             Если какое-то изображение не сущесвует, вернет False.
             """
-
             image_path = [
-                site_dir / value for value in elems
+                site_dir / value for value
+                in elems
+                if (site_dir / value).exists()
             ]
-            for path in image_path:
-                if not path.exists():
-                    return False
-            return image_path
+            if len(image_path) == len(elems):
+                return image_path
+            return False
 
         def extract(image_path: List[Path], target: Path):
             """Функция для копирования файла изображения в заданную папку."""
@@ -179,7 +186,7 @@ class Comic:
             """
             Функция для вертикального объединения изображений.
 
-            Прежполагается, что первое изображение - самое широкое. Будет
+            Предполагается, что первое изображение - самое широкое. Будет
             создано изображение Union.png в целевой папке.
             """
 
@@ -200,12 +207,11 @@ class Comic:
                         copy_img = img.copy()
                         new_img.paste(copy_img, coordinates[index])
                         copy_img.close()
-                new_img.save(target / 'Union.png')
+                new_img.save(target / f'{target.parts[-2]}_Union.png')
 
         for chapter in self.list_chapters():
-            original = chapter / ORIGINAL
-            site_file, site_dir = search_dir(original)
-            if site_dir and site_file:
+            site_file, site_dir = search_file(chapter)
+            if site_dir:
                 with open(site_file, "r", encoding="utf-8") as file:
                     example_soup = bs4.BeautifulSoup(
                         file.read(),
@@ -218,7 +224,9 @@ class Comic:
                         'Извлечь': extract,
                         'Соединить': unite
                     }
-                    action[method](image_path, original)
+                    target = Path(chapter / ORIGINAL)
+                    target.mkdir(exist_ok=True)
+                    action[method](image_path, target)
                     if DELETE:
                         send2trash.send2trash([site_dir, site_file])
                 else:
@@ -274,6 +282,13 @@ class MainFolder:
         self.path = path
 
     def create_comic(self):
+        """
+        Создание комикса.
+
+        Пользователь вводит название комикса, если оно валидно, то будет отдана
+        команда о создании комикса.
+        Пустое значение - действие отменяется.
+        """
         blockRegexes = [
             (
                 r'\.$',
@@ -303,6 +318,12 @@ class MainFolder:
         return CANCEL
 
     def choose_comic(self):
+        """
+        Выбор комикса.
+
+        Возвращает имя выбранной папки из списка папок, находящихся
+        в self.path
+        """
         list_comics = [
             value.name for value in self.path.iterdir()
             if value.is_dir()
@@ -318,6 +339,13 @@ class MainFolder:
         return False
 
     def add_chapter(self):
+        """
+        Добавить часть.
+
+        Пользователь выбирает комикс, вводит число, если есть оба значения, то
+        будет отдана команда о добавлении части(-ей).
+        Пустое значение - действие отменяется.
+        """
         comic = self.choose_comic()
         if not comic:
             return CANCEL
@@ -336,6 +364,13 @@ class MainFolder:
             return f'Новые части ({repeat}) и подпапки созданы.'
 
     def extract_image(self):
+        """
+        Извлечь изображения.
+
+        Пользователь выбирает комикс, выбирает метод, отдается приказ об
+        извлечении изображений.
+        Пустое значение - действие отменяется.
+        """
         comic = self.choose_comic()
         if comic:
             comic = Comic(self.path / comic)
@@ -354,6 +389,13 @@ class MainFolder:
         return CANCEL
 
     def create_shortcut(self):
+        """
+        Извлечь изображения.
+
+        Пользователь выбирает комикс, выбирает метод, отдается приказ об
+        извлечении изображений.
+        Пустое значение - действие отменяется.
+        """
         comic = self.choose_comic()
         if comic:
             comic = Comic(self.path / comic)
@@ -375,3 +417,17 @@ class MainFolder:
                 else:
                     break
         return CANCEL
+
+    def move_images(self):
+        pass
+        # comic = self.choose_comic()
+        # if comic:
+
+        # return CANCEL
+
+# Новая система определения сайта (выполнено)
+# Поиск файлов во сайтов во всех папках главы комикса (выполнено)
+# Добавить нумерацию файлов Union (выполнено)
+# Перемещение новых файлов из папки Photoshop в папку Перевод
+
+# Добавить декоратор @choose_comic
