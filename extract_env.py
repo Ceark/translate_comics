@@ -17,8 +17,11 @@ def validate_name_directory(word: str):
 
 def universal_directory(key: str, default: str):
     """
-    Функция извлекает из .env файла значение 'key' и, если оно проходит
-    валидацию, возвращает его, в противном случае возвращает 'default'.
+    Извлечение имён для именнованных директорий.
+
+    Функция извлекает переменную, названную 'key', и, если она пройдёт
+    валидацию, вернёт её значение; в противном случае будет передано значение
+    'default'.
     """
     name_directory = getenv(f'{key}', '').strip()
     if validate_name_directory(name_directory):
@@ -26,17 +29,23 @@ def universal_directory(key: str, default: str):
     return default
 
 
-def additional_directories():
-    named_dir = (ORIGINAL, EDITOR, TRANSLATE)
+def additional_directories(*args_named_dirs):
+    """
+    Извлечение имён для дополнительных директорий.
+
+    Функция извлекает переменную 'ADDITIONAL_FOLDERS' и разбивает её на части
+    по запятой. Функция вернёт те элементы, которые прошли валидацию
+    и которых нет в 'args_named_dirs'.
+    """
     directories = {
         string.strip() for string
         in getenv('ADDITIONAL_FOLDERS', '').split(',')
         if (
-            string not in named_dir
+            string.strip() not in args_named_dirs
             and validate_name_directory(string)
         )
     }
-    return list(directories)
+    return tuple(directories)
 
 
 def validate_base_dir():
@@ -61,24 +70,32 @@ def validate_base_dir():
     return False
 
 
-def length_number():
-    length_number = getenv('LENGTH_NUMBER', '2')
+def length_number(min_length: int, max_length: int):
+    """Извлечение длины числа для начальной нумерации имен папок."""
+    if min_length > max_length:
+        min_length, max_length = max_length, min_length
+    length_number = getenv('LENGTH_NUMBER', str(min_length))
     if (
         length_number.isdecimal()
-        and len(length_number) < 10
+        and int(length_number) < max_length
     ):
         return int(length_number)
     print(
         'Число LENGTH_NUMBER указано неверно. Возможные причины:',
-        '- число слишком большое (не больше десяти символов);',
+        f'- число слишком большое (максимум - {max_length});',
         '- число содержит не только цифры.',
-        'В качестве LENGTH_NUMBER будет использовано число 2.',
+        f'В качестве LENGTH_NUMBER будет использовано число {min_length}.',
         sep='\n'
     )
-    return 2
+    return min_length
 
 
 def delete_file():
+    """
+    Извлечени согласия на удаление (в корзину) файлов комикса после извлечения.
+
+    1 (True) - удалить файлы, 0 или '' (False) - не удалять файлы.
+    """
     value = getenv('DELETE', '')
     if value.isdecimal():
         return bool(int(value))
@@ -101,7 +118,11 @@ if not load_dotenv(path_env):
             ]
         )
         file.write(text_file)
-    print('Файл настроек создан. Вы можете изменить их через Блокнот.')
+    print(
+        'Настройки можно изменить через Блокнот.',
+        'Файл настроек находится рядом с файлом программы.',
+        '-----'
+    )
     load_dotenv(path_env)
 
 BASE_DIR = validate_base_dir()
@@ -112,8 +133,10 @@ EDITOR = universal_directory('EDITOR', 'Editor')
 
 TRANSLATE = universal_directory('TRANSLATE', 'Translate')
 
-ADDITIONAL = additional_directories()
+NAMED_DIRS = (ORIGINAL, EDITOR, TRANSLATE)
 
-LENGTH_NUMBER = length_number()
+ADDITIONAL = additional_directories(NAMED_DIRS)
+
+LENGTH_NUMBER = length_number(2, 4)
 
 DELETE = delete_file()

@@ -9,14 +9,15 @@ import send2trash
 from PIL import Image
 from win32com.client import Dispatch
 
-from extract_env import (ADDITIONAL, DELETE, EDITOR, LENGTH_NUMBER, ORIGINAL,
-                         TRANSLATE)
+from extract_env import (ADDITIONAL, DELETE, EDITOR, LENGTH_NUMBER, NAMED_DIRS,
+                         ORIGINAL, TRANSLATE)
+from site_and_selectors import SETTINGS
 
 CANCEL = 'Действие отменено.'
 
 
 class Comic:
-    directories = ADDITIONAL + [ORIGINAL, EDITOR, TRANSLATE]
+    directories = ADDITIONAL + NAMED_DIRS
 
     def __init__(self, path: Path):
         self.path = path
@@ -25,9 +26,9 @@ class Comic:
         """Создать папку и подпапки для комикса."""
 
         for directory in self.directories:
-            (self.path / directory).mkdir(parents=True)
+            (self.path / directory).mkdir(parents=True, exist_ok=True)
 
-    def list_chapters(self):
+    def _list_chapters_(self):
         """
         Получить список путей глав комикса.
 
@@ -45,37 +46,40 @@ class Comic:
         ]
         return chapters
 
-    def number_chapter(self, name: str):
+    def _number_chapter_(self, name: str):
         """
-        Принимает строку и возвращает строку, состояющую из первых чисел
-        полученной Зстроки.
+        Возвращает строку, состояющую из первых чисел полученной строки.
         """
 
         number = ''
         for symbol in name:
-            if not symbol.isdecimal():
+            if symbol.isdecimal():
+                number += symbol
+            else:
                 break
-            number += symbol
         return number
 
     def add_chapter(self, repeat: int):
         """
-        Добивить нумерованную часть.
+        Добавить нумерованную часть.
 
-        Определят часть с самым большим номером после чего создает часть
+        Определяет часть с самым большим номером, после чего создает часть
         с номером +1. Параметр "repeat" - количество добавленных частей.
         """
 
-        chapters = self.list_chapters()
+        chapters = self._list_chapters_()
         name = max(chapters).name if chapters else '0'
-        number = int(self.number_chapter(name)) + 1
+        number = int(self._number_chapter_(name)) + 1
         for number_chapter in range(number, number + repeat):
             long_number = str(number_chapter).rjust(LENGTH_NUMBER, '0')
             for directory in self.directories:
                 (self.path / long_number / directory).mkdir(parents=True)
 
     def extract_image(self, method):
-        """Извлекает и объединяет изображения из части комикса."""
+        """
+        Извлекает и/или объединяет изображения первого найденного сайта
+        и помещает результат в папку 'ORIGINAL'.
+        """
 
         def search_file(chapter: Path):
             """
@@ -89,87 +93,32 @@ class Comic:
                     in files
                     if '.htm' in Path(file).suffix
                 ]:
-                    site_file = directory / file
                     site_dir = directory / (file.stem + '_files')
                     if site_dir.exists():
+                        site_file = directory / file
                         return (site_file, site_dir)
             return (False, False)
 
-        def image_names(example_soup: bs4.BeautifulSoup):
-            """
-            Функция для извлечения списка имен файлов.
-
-            После опознания сайта по <link> передает в подфунцкию (используют
-            ли разные сайты разный подход?) файл и параметры.
-            """
-            def extract_one(
-                example_soup: bs4.BeautifulSoup,
-                selectors: list[str],
-                tag: str,
-                symbol: str
-            ):
-                for selector in selectors:
-                    parts = example_soup.select(selector)
-                    if parts:
-                        elems: list[str] = [
-                            child.attrs[tag] for child
-                            in parts[0].children
-                            if isinstance(child, bs4.element.Tag)
-                        ]
-                        elems = [
-                            Path(value).name.partition(symbol)[0]
-                            for value in elems
-                        ]
-                        return elems
-                    return []
-
+        def list_image(
+            example_soup: bs4.BeautifulSoup,
+            site_dir: Path
+        ):
             if example_soup.link:
                 link = example_soup.link.attrs['href']
-                tapas = [
-                    'article[class="viewer__body js-episode-article main__body"]',
-                    'article[class="viewer__body js-episode-article main__body hidden js-mature-content"]'
-                ]
-                webtoons = [
-                    'div[class="viewer_img _img_viewer_area"]'
-                ]
-                name_sites = {
-                    'tapas': 'tapas',
-                    'webtoons': 'webtoons'
-                }
-                parameters = {
-                    name_sites['tapas']: {
-                        'selectors': tapas,
-                        'tag': 'data-src',
-                        'symbol': '*'
-                    },
-                    name_sites['webtoons']: {
-                        'selectors': webtoons,
-                        'tag': 'data-url',
-                        'symbol': '?'
-                    }
-                }
-                func = {
-                    name_sites['tapas']: extract_one,
-                    name_sites['webtoons']: extract_one
-                }
-                for site in name_sites:
+                for site in SETTINGS:
                     if site in link:
-                        elems = func[site](example_soup, **parameters[site])
-                        return elems
-            return False
-
-        def list_image_files(site_dir: Path, elems: list[str]):
-            """
-            Фунцкия составляет список путей файлов изображений комикса.
-            Если какое-то изображение не сущесвует, вернет False.
-            """
-            image_path = [
-                site_dir / value for value
-                in elems
-                if (site_dir / value).exists()
-            ]
-            if len(image_path) == len(elems):
-                return image_path
+                        func = SETTINGS[site]['function']
+                        parameters = SETTINGS[site]['parameters']
+                        names_images: list[str] = func(
+                            example_soup, site_dir, **parameters
+                        )
+                        images_path = [
+                            site_dir / value for value
+                            in names_images
+                            if (site_dir / value).exists()
+                        ]
+                        if len(images_path) == len(names_images):
+                            return images_path
             return False
 
         def extract(image_path: List[Path], target: Path):
@@ -209,7 +158,11 @@ class Comic:
                         copy_img.close()
                 new_img.save(target / f'{target.parts[-2]}_Union.png')
 
-        for chapter in self.list_chapters():
+        action = {
+            'Извлечь': extract,
+            'Соединить': unite
+        }
+        for chapter in self._list_chapters_():
             site_file, site_dir = search_file(chapter)
             if site_dir:
                 with open(site_file, "r", encoding="utf-8") as file:
@@ -217,13 +170,8 @@ class Comic:
                         file.read(),
                         'html.parser'
                     )
-                elems = image_names(example_soup)
-                image_path = list_image_files(site_dir, elems)
+                image_path = list_image(example_soup, site_dir)
                 if image_path:
-                    action = {
-                        'Извлечь': extract,
-                        'Соединить': unite
-                    }
                     target = Path(chapter / ORIGINAL)
                     target.mkdir(exist_ok=True)
                     action[method](image_path, target)
@@ -231,20 +179,26 @@ class Comic:
                         send2trash.send2trash([site_dir, site_file])
                 else:
                     print(
-                        f'В папке {site_dir} не хватает некоторых изображений.',
+                        f'В папке {site_dir} не хватает изображений.',
                         'Пожалуйста, загрузите файл сайта заново.'
                     )
 
     def create_shortcut(self, folder_name: str):
         """
-        Создание ярлыков для файлов папки с указанными именем.
+        Создание ярлыков для файлов папки части с указанными именем.
 
         Если передано пустое значение, то будут обработаны файлы,
-        не упакованные в папки.
+        не упакованные в папки. Ярлыки будут расположены в папке комикса.
         """
 
         def shortcut(target_path: str, shortcut_path: str, working_dir: str):
-            """Функция создания ярлыка."""
+            """
+            Функция создания ярлыка.
+
+            shortcut_path - адрес ярлыка;
+            target_path - файл, для которого создаётся ярлык;
+            working_dir - путь к папке, в которой лежит файл.
+            """
 
             shell = Dispatch('WScript.Shell')
             shortcut = shell.CreateShortCut(shortcut_path)
@@ -252,12 +206,10 @@ class Comic:
             shortcut.WorkingDirectory = working_dir
             shortcut.save()
 
-        shortcut_folder = (
-            self.path / folder_name if folder_name else self.path / 'Разное'
-        )
+        shortcut_folder = self.path / folder_name
         shortcut_folder.mkdir(exist_ok=True)
-        for chapter in self.list_chapters():
-            number = self.number_chapter(chapter.name) + '_'
+        for chapter in self._list_chapters_():
+            num_chapter = self._number_chapter_(chapter.name)
             path_folder = self.path / chapter / folder_name
             if path_folder.exists():
                 files = [
@@ -265,9 +217,8 @@ class Comic:
                     if file.is_file()
                 ]
                 for file in files:
-                    shortcut_path = str(
-                        shortcut_folder / (number + file.stem + '.lnk')
-                    )
+                    name_shortcut = num_chapter + '_' + file.stem + '.lnk'
+                    shortcut_path = str(shortcut_folder / name_shortcut)
                     working_dir = str(file.parent)
                     target_path = str(file)
                     shortcut(
@@ -276,8 +227,83 @@ class Comic:
                         working_dir=working_dir
                     )
 
+    def move_images(self):
+        """
+        Перемещение изображений с расширениями Paint из папки EDITOR в папку
+        TRANSLATE.
+        """
+        for chapter in self._list_chapters_():
+            path_editor = chapter / EDITOR
+            if path_editor.exists():
+                path_translate = chapter / TRANSLATE
+                path_translate.mkdir(exist_ok=True)
+                list_files = [
+                    file for file
+                    in path_editor.iterdir()
+                    if file.suffix in (
+                        '.png',
+                        '.bmp',
+                        '.dip',
+                        '.jpg',
+                        '.jpeg',
+                        '.jpe',
+                        '.jfif',
+                        '.gif',
+                        '.tif',
+                        '.tiff',
+                        '.heic',
+                        '.hif',
+                        '.paint'
+                    )
+                ]
+                for file in list_files:
+                    file.move(path_translate)
+
+    def create_folder(self):
+        for chapter in self._list_chapters_():
+            for name in self.directories:
+                (chapter / name).mkdir(exist_ok=True)
+            number_chapter = self._number_chapter_(chapter.name)
+            if len(number_chapter) < LENGTH_NUMBER:
+                number = number_chapter.rjust(LENGTH_NUMBER, '0')
+                name = chapter.name[len(number_chapter):]
+                new_name = chapter.parent / (number + name)
+                chapter.rename(new_name)
+
+
+def choose_comic(func):
+    """
+    Декоратор для выбора комикса.
+
+    Получив объект MainFolder, функция формирует список из имён находящихся в
+    нём папок, после чего пользователь выбирает нужную папку (комикс). Путь к
+    выбранному комиксу передается в декорированную функцию. Если выбирать
+    не из чего или пользователь выбрал ничего, функция вернёт строку отмены.
+    """
+    def wrapper(self: MainFolder):
+        list_comics = [
+            value.name for value
+            in self.path.iterdir()
+            if value.is_dir()
+        ]
+        if list_comics:
+            choose_comic = pyip.inputMenu(
+                list_comics,
+                numbered=True,
+                prompt='Выберете комикc:\n',
+                blank=True
+            )
+            if choose_comic:
+                path_comic = self.path / choose_comic
+                result = func(self, path_comic)
+                return result
+        return CANCEL
+    return wrapper
+
 
 class MainFolder:
+    directories = NAMED_DIRS + ADDITIONAL
+
     def __init__(self, path: Path):
         self.path = path
 
@@ -317,38 +343,14 @@ class MainFolder:
             return f'Создана папка для комикса "{name_new_comic}".'
         return CANCEL
 
-    def choose_comic(self):
+    @choose_comic
+    def add_chapter(self, path_comic):
         """
-        Выбор комикса.
+        Добавить часть(-и) к комиксу.
 
-        Возвращает имя выбранной папки из списка папок, находящихся
-        в self.path
+        Если пользователь не выбрал число (сколько частей добавлять), то
+        действие отменяется.
         """
-        list_comics = [
-            value.name for value in self.path.iterdir()
-            if value.is_dir()
-        ]
-        if list_comics:
-            choose_comic = pyip.inputMenu(
-                list_comics,
-                numbered=True,
-                prompt='Выберете комикc:\n',
-                blank=True
-            )
-            return choose_comic
-        return False
-
-    def add_chapter(self):
-        """
-        Добавить часть.
-
-        Пользователь выбирает комикс, вводит число, если есть оба значения, то
-        будет отдана команда о добавлении части(-ей).
-        Пустое значение - действие отменяется.
-        """
-        comic = self.choose_comic()
-        if not comic:
-            return CANCEL
         repeat = pyip.inputInt(
             prompt='Сколько частей создать?\n',
             blank=True,
@@ -356,78 +358,67 @@ class MainFolder:
         )
         if not repeat:
             return CANCEL
-        comic = Comic(self.path / comic)
+        comic = Comic(path_comic)
         comic.add_chapter(repeat)
-        if repeat == 1:
-            return 'Новая часть и подпапки созданы.'
-        else:
-            return f'Новые части ({repeat}) и подпапки созданы.'
+        return f'Новые части ({repeat}) и подпапки созданы.'
 
-    def extract_image(self):
+    @choose_comic
+    def extract_image(self, path_comic):
         """
         Извлечь изображения.
 
-        Пользователь выбирает комикс, выбирает метод, отдается приказ об
-        извлечении изображений.
-        Пустое значение - действие отменяется.
+        Если пользователь не выбрал метод, действие отменяется.
         """
-        comic = self.choose_comic()
-        if comic:
-            comic = Comic(self.path / comic)
-            method = pyip.inputMenu(
-                choices=[
-                    'Извлечь',
-                    'Соединить'
-                ],
-                prompt='Что делать с изображениями:\n',
-                numbered=True,
-                blank=True
+        comic = Comic(path_comic)
+        method = pyip.inputMenu(
+            choices=[
+                'Извлечь',
+                'Соединить'
+            ],
+            prompt='Что делать с изображениями?\n',
+            numbered=True,
+            blank=True
+        )
+        if method:
+            comic.extract_image(method)
+            return 'Процесс завершен.'
+        return CANCEL
+
+    @choose_comic
+    def create_shortcut(self, path_comic):
+        """
+        Создать ярлыки для файлов в папках части комикса, ярлыки будут
+        расположены в папках комикса для ярлыков.
+
+        Если выбрано 'Для файлов папки', то ярлыки будут созданы для файлов,
+        находящихся непосредственно в папке части.
+        """
+        comic = Comic(path_comic)
+        word_folder = ('Для файлов папки',)
+        choices = self.directories + word_folder
+        while True:
+            folder = pyip.inputMenu(
+                choices=choices,
+                prompt='Для файлов какой подпапки создать ярлыки?\n',
+                blank=True,
+                numbered=True
             )
-            if method:
-                comic.extract_image(method)
-                return 'Процесс завершен.'
+            if folder:
+                folder = 'Разное' if folder == word_folder else folder
+                comic.create_shortcut(folder)
+                return 'Ярлыки созданы (или перезаписаны).'
+            else:
+                break
         return CANCEL
 
-    def create_shortcut(self):
-        """
-        Извлечь изображения.
+    @choose_comic
+    def move_images(self, path_comic):
+        comic = Comic(path_comic)
+        comic.move_images()
+        return 'Изоюражения перемещены.'
 
-        Пользователь выбирает комикс, выбирает метод, отдается приказ об
-        извлечении изображений.
-        Пустое значение - действие отменяется.
-        """
-        comic = self.choose_comic()
-        if comic:
-            comic = Comic(self.path / comic)
-            word_folder = 'Для файлов папки'
-            choices = [
-                value.name for value in comic.path.iterdir()
-                if value.name in comic.directories
-            ] + [word_folder]
-            while True:
-                folder = pyip.inputMenu(
-                    choices=choices,
-                    prompt='Для файлов какой подпапки создать ярлыки?\n',
-                    blank=True,
-                    numbered=True
-                )
-                if folder:
-                    folder = '' if folder == word_folder else folder
-                    comic.create_shortcut(folder)
-                else:
-                    break
-        return CANCEL
-
-    def move_images(self):
-        pass
-        # comic = self.choose_comic()
-        # if comic:
-
-        # return CANCEL
-
-# Новая система определения сайта (выполнено)
-# Поиск файлов во сайтов во всех папках главы комикса (выполнено)
-# Добавить нумерацию файлов Union (выполнено)
-# Перемещение новых файлов из папки Photoshop в папку Перевод
-
-# Добавить декоратор @choose_comic
+    @choose_comic
+    def create_folder(self, path_comic):
+        comic = Comic(path_comic)
+        comic.create_folder()
+        return 'Подпапки созданы, номера частей стандартизированы.'

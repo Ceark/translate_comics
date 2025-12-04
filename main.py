@@ -11,9 +11,11 @@ def main():
         main_dir = MainFolder(BASE_DIR)
         dict_functions = {
             'Создать комикс': main_dir.create_comic,
+            'Создать подпапки': main_dir.create_folder,
             'Добавить часть': main_dir.add_chapter,
             'Извлечь изображения': main_dir.extract_image,
-            'Создать ярлыки': main_dir.create_shortcut
+            'Создать ярлыки': main_dir.create_shortcut,
+            'Переместить изображения': main_dir.move_images
         }
         while True:
             action = pyip.inputMenu(
