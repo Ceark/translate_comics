@@ -1,25 +1,16 @@
 from os import getenv
-from re import search
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-
-def validate_name_directory(word: str):
-    """
-    Валидация имени папки для Windows.
-    Если полученная строка содержит недопустимые символы, вернет False.
-    """
-    if not search(r'[:<>"\/\\\|\?\*]|\.$', word):
-        return True
-    return False
+from validators import validate_name_directory, validate_dir
 
 
 def universal_directory(key: str, default: str):
     """
-    Извлечение имён для именнованных директорий.
+    Извлечение имён для именованных директорий.
 
-    Функция извлекает переменную, названную 'key', и, если она пройдёт
+    Функция извлекает переменную 'key', и, если она пройдёт
     валидацию, вернёт её значение; в противном случае будет передано значение
     'default'.
     """
@@ -33,9 +24,8 @@ def additional_directories(*args_named_dirs):
     """
     Извлечение имён для дополнительных директорий.
 
-    Функция извлекает переменную 'ADDITIONAL_FOLDERS' и разбивает её на части
-    по запятой. Функция вернёт те элементы, которые прошли валидацию
-    и которых нет в 'args_named_dirs'.
+    Функция вернёт те элементы, которые прошли валидацию
+    и которых нет в 'args_named_dirs', элементы не повторяются.
     """
     directories = {
         string.strip() for string
@@ -48,17 +38,14 @@ def additional_directories(*args_named_dirs):
     return tuple(directories)
 
 
-def validate_base_dir():
+def base_dir():
     """
     Валидация пути, указанного в качестве главной папки.
 
-    Если путь не абсолютен, не ведет к папке, вернет False.
+    Требования: путь абсолютен, путь ведёт к существуещей папке.
     """
     path = Path(getenv('BASE_DIR', ''))
-    if (
-        path.is_absolute()
-        and path.is_dir()
-    ):
+    if validate_dir(path):
         return path
     print(
         'Путь BASE_DIR указан неверно. Возможные причины:',
@@ -72,8 +59,6 @@ def validate_base_dir():
 
 def length_number(min_length: int, max_length: int):
     """Извлечение длины числа для начальной нумерации имен папок."""
-    if min_length > max_length:
-        min_length, max_length = max_length, min_length
     length_number = getenv('LENGTH_NUMBER', str(min_length))
     if (
         length_number.isdecimal()
@@ -105,9 +90,9 @@ def delete_file():
 path_env = Path('.', '.env')
 if not load_dotenv(path_env):
     with open('.env', 'w', encoding='utf-8') as file:
-        base = input('Абсолютный путь к папке для BASE_DIR:\n')
+        base = input('Абсолютный путь к папке для комиксов:\n')
         text_file = '\n\n'.join(
-            [
+            (
                 f'BASE_DIR = {base}',
                 'ORIGINAL = Original',
                 'EDITOR = Editor',
@@ -115,7 +100,7 @@ if not load_dotenv(path_env):
                 'ADDITIONAL_FOLDERS = Text',
                 'LENGTH_NUMBER = 2',
                 'DELETE = 0'
-            ]
+            )
         )
         file.write(text_file)
     print(
@@ -125,7 +110,7 @@ if not load_dotenv(path_env):
     )
     load_dotenv(path_env)
 
-BASE_DIR = validate_base_dir()
+BASE_DIR = base_dir()
 
 ORIGINAL = universal_directory('ORIGINAL', 'Original')
 

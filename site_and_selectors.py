@@ -11,7 +11,7 @@ import bs4
 def extract_one(
     example_soup: bs4.BeautifulSoup,
     site_dir: Path,
-    selectors: list[str],
+    selectors: list,
     tag: str,
     symbol: str
 ):
@@ -19,10 +19,10 @@ def extract_one(
     Возвращает список имен файлов.
     """
     for selector in selectors:
-        parts = example_soup.select(selector)
+        parts = example_soup.select(selector)  # нет подходящего селектора
         if parts:
             for part in parts:
-                elems: list[str] = [
+                elems: list = [
                     str(child.attrs[tag]) for child
                     in part.children
                     if isinstance(child, bs4.element.Tag)
@@ -31,13 +31,13 @@ def extract_one(
                     Path(value).name.partition(symbol)[0]
                     for value in elems
                 ]
-                validate = [
+                validate = [  # не хватает нескольких файлов изображений
                     (site_dir / file).exists()
                     for file in elems
                 ]
                 if False not in validate:
                     return elems
-        return []
+    return []
 
 
 tapas = [
@@ -48,7 +48,6 @@ tapas = [
 webtoons = [
     'div[class="viewer_img _img_viewer_area"]'
 ]
-
 
 names_site = {
     'tapas': 'tapas',
