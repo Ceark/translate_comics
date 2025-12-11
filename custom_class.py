@@ -104,7 +104,7 @@ class Comic(Folder):
                     if file.suffix in PAINT_SUFFIX
                 ]
                 for file in list_files:
-                    target = translate / file
+                    target = translate / file.name
                     os.replace(file, target)
 
     def create_shortcut(self, folder: str):
@@ -135,6 +135,16 @@ class Comic(Folder):
                         shortcut_path=shortcut_path,
                         working_dir=working_dir
                     )
+
+    def update_folder(self):
+        """
+        Добавить в папки комикса и частей, все директории.
+
+        Предназначение: на случай изменения настроек.
+        """
+        for folder in ([self.path] + self._list_chapters_()):
+            for directory in self.directories:
+                (folder / directory).mkdir(parents=True, exist_ok=True)
 
 
 def choose_comic(func):
@@ -272,3 +282,9 @@ class MainFolder(Folder):
             else:
                 break
         return CANCEL
+
+    @choose_comic
+    def update_folder(self, path_comic):
+        comic = Comic(path_comic)
+        comic.update_folder()
+        return 'Подпапки созданы.'

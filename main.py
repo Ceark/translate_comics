@@ -15,6 +15,7 @@ def main():
             'Извлечь изображения': main_dir.extract_image,
             'Переместить изображения': main_dir.move_images,
             'Создать ярлыки': main_dir.create_shortcut,
+            'Ещё раз создать папки': main_dir.update_folder,
         }
         while True:
             action = pyip.inputMenu(
