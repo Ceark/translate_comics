@@ -6,8 +6,8 @@ import pyinputplus as pyip
 import send2trash
 
 from additional_functions import (extract, list_image, number_string,
-                                  search_htm_file, unite, shortcut)
-from constants import CANCEL, PAINT_SUFFIX, NAME_CHAPTER
+                                  search_htm_file, shortcut, unite)
+from constants import CANCEL, NAME_CHAPTER, PAINT_SUFFIX
 from extract_env import (ADDITIONAL, DELETE, EDITOR, LENGTH_NUMBER, NAMED_DIRS,
                          ORIGINAL, TRANSLATE)
 

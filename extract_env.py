@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from validators import validate_name_directory, validate_dir
+from validators import validate_dir, validate_name_directory
 
 
 def universal_directory(key: str, default: str):
