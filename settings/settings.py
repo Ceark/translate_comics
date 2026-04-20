@@ -1,5 +1,7 @@
-from os import environ
+import tkinter as tk
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 from .extract_env import (additional_directories, base_dir, delete_file,
                           length_number, universal_directory)
@@ -21,27 +23,43 @@ def first_start(path_main_folder: Path):
         file.write(text_file)
 
 
-def update_settings(**kwargs):
-    """
-    Ожидаемый словарь содержит поля Base_Dir, Original, Editor, Translate,
-    Additional_Folders, Length_Number, Delete.
-    """
-    with open('.env', 'w', encoding='utf-8') as file:
-        text_file = '\n\n'.join(
-            (
-                f'BASE_DIR = {kwargs.get("base_dir")}',
-                f'ORIGINAL = {kwargs.get("original")}',
-                f'EDITOR = {kwargs.get("editor")}',
-                f'TRANSLATE = {kwargs.get("translate")}',
-                f'ADDITIONAL_FOLDERS = {kwargs.get("additional_folders")}',
-                f'LENGTH_NUMBER = {kwargs.get("length_number")}',
-                f'DELETE = {kwargs.get("delete")}'
-            )
-        )
-        file.write(text_file)
-    for value in kwargs:
-        environ[value] = kwargs[value]
+path_env = Path('.', '.env')
+# if not load_dotenv(path_env):
+if True:
 
+    # Окно ввода
+    pady = 5
+
+    window = tk.Tk()
+    window.title("translate_comics")
+    window.geometry('400x100')
+
+    label = tk.Label(
+        window,
+        text='Адрес папки для комиксов',
+        font=('Arial', 14)
+    )
+    label.pack(pady=pady)
+
+    entry = tk.Entry(
+        window,
+        font=('Arial', 14),
+        width=30
+    )
+    entry.pack(pady=pady)
+
+    def show_input():
+        user_input = entry.get()
+        first_start(Path(user_input))
+        window.destroy()
+
+    button = tk.Button(window, text='test', command=show_input)
+    button.pack(pady=pady)
+
+    window.mainloop()
+    # Конец окна ввода
+
+    load_dotenv()
 
 BASE_DIR = base_dir()
 
