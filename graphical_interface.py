@@ -6,10 +6,12 @@ window.title('translate_comics')
 window.geometry("300x200")
 
 # Столбцы и строки
-window.columnconfigure(index=0, weight=1)
-window.columnconfigure(index=1, weight=1)
-window.rowconfigure(index=0, weight=1)
-window.rowconfigure(index=1, weight=1)
+quantity_column = 2
+quantity_row = 8
+for index in range(quantity_column):
+    window.columnconfigure(index=index, weight=1)
+for index in range(quantity_row):
+    window.rowconfigure(index=index, weight=1)
 
 
 # Команды для Button
@@ -55,8 +57,10 @@ buttons = {
 entries['BASE_DIR'].insert(0, 'Симферополь')
 
 # Расположение виджетов
-labels['BASE_DIR'].grid(column=0, row=0)
-entries['BASE_DIR'].grid(column=1, row=0)
-buttons['SETTING'].grid(column=0, columnspan=2, row=1)
+for index, value in enumerate(labels):
+    labels[value].grid(column=0, row=index)
+for index, value in enumerate(entries):
+    entries[value].grid(column=1, row=index)
+buttons['SETTING'].grid(column=0, columnspan=2, row=(quantity_row-1))
 
 window.mainloop()
