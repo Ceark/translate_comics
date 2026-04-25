@@ -40,13 +40,13 @@ entry_validate_wrapper = (window.register(validate_entry), '%P')
 
 # Виджеты
 labels = {}
-labels['BASE_DIR'] = tk.Label(window, text='BASE DIR')
-for string in ('original', 'editor', 'translate'):
-    labels[string.upper()] = tk.Label(window, text=string.upper())
-labels['ADDITIONAL_FOLDERS'] = tk.Label(window, text='ADDITIONAL FOLDERS')
-labels['LENGTH_NUMBER'] = tk.Label(window, text='LENGTH NUMBER')
-for string in ('delete',):
-    labels[string.upper()] = tk.Label(window, text=string.upper())
+name_env = (
+    'base_dir', 'original', 'editor', 'translate', 'additional_folders',
+    'length_number', 'delete'
+)
+for string in name_env:
+    upper = ' '.join(string.split('_')).upper()
+    labels[string.upper()] = tk.Label(window, text=upper)
 
 entries = {
     'BASE_DIR': tk.Entry(
