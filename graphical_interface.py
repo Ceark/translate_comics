@@ -1,9 +1,10 @@
 import tkinter as tk
+from tkinter import filedialog
 
 # Окно
 window = tk.Tk()
 window.title('translate_comics')
-window.geometry("300x200")
+window.geometry("350x350")  # Ширина - высота
 
 # Столбцы и строки
 quantity_column = 2
@@ -22,6 +23,8 @@ def setting():
     2) Возвращает данные
     """
     data = entries['BASE_DIR'].get()
+    test = filedialog.askdirectory()
+    print(test)
     print(data)
 
 
@@ -36,19 +39,26 @@ def validate_entry(value):
 entry_validate_wrapper = (window.register(validate_entry), '%P')
 
 # Виджеты
-labels = {
-    'BASE_DIR': tk.Label(window, text='BASE DIR')
-}
+labels = {}
+labels['BASE_DIR'] = tk.Label(window, text='BASE DIR')
+for string in ('original', 'editor', 'translate'):
+    labels[string.upper()] = tk.Label(window, text=string.upper())
+labels['ADDITIONAL_FOLDERS'] = tk.Label(window, text='ADDITIONAL FOLDERS')
+labels['LENGTH_NUMBER'] = tk.Label(window, text='LENGTH NUMBER')
+for string in ('delete',):
+    labels[string.upper()] = tk.Label(window, text=string.upper())
+
 entries = {
     'BASE_DIR': tk.Entry(
         window,
-        validate='key',
+        validate='focusout',
         validatecommand=entry_validate_wrapper
     ),
     'ORIGINAL': tk.Entry(
         window
     )
 }
+
 buttons = {
     'SETTING': tk.Button(window, text='Сохранить', command=setting)
 }
@@ -58,9 +68,13 @@ entries['BASE_DIR'].insert(0, 'Симферополь')
 
 # Расположение виджетов
 for index, value in enumerate(labels):
-    labels[value].grid(column=0, row=index)
+    labels[value].grid(column=0, row=index, padx=20, sticky='w')
 for index, value in enumerate(entries):
-    entries[value].grid(column=1, row=index)
-buttons['SETTING'].grid(column=0, columnspan=2, row=(quantity_row-1))
+    entries[value].grid(column=1, row=index, padx=20,)
+buttons['SETTING'].grid(
+    column=0,
+    columnspan=quantity_column,
+    row=(quantity_row-1)
+)
 
 window.mainloop()
