@@ -48,10 +48,14 @@ for string in name_env:
     upper = ' '.join(string.split('_')).upper()
     labels[string.upper()] = tk.Label(window, text=upper)
 
-entries = {}
+entries: dict = {}
 for string in name_env[:-2]:
     upper = ' '.join(string.split('_')).upper()
     entries[string.upper()] = tk.Entry(window)
+
+entries['length_number'] = tk.Spinbox(window, from_=1, to=5)
+var = tk.BooleanVar()
+entries['delete'] = tk.Checkbutton(window, variable=var)
 
 buttons = {
     'SETTING': tk.Button(window, text='Сохранить', command=setting)
