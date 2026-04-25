@@ -48,16 +48,10 @@ for string in name_env:
     upper = ' '.join(string.split('_')).upper()
     labels[string.upper()] = tk.Label(window, text=upper)
 
-entries = {
-    'BASE_DIR': tk.Entry(
-        window,
-        validate='focusout',
-        validatecommand=entry_validate_wrapper
-    ),
-    'ORIGINAL': tk.Entry(
-        window
-    )
-}
+entries = {}
+for string in name_env[:-2]:
+    upper = ' '.join(string.split('_')).upper()
+    entries[string.upper()] = tk.Entry(window)
 
 buttons = {
     'SETTING': tk.Button(window, text='Сохранить', command=setting)
