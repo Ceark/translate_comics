@@ -2,8 +2,8 @@ import tkinter as tk
 from tkinter import filedialog
 
 name_env = (
-    'base_dir', 'original', 'editor', 'translate', 'additional_folders',
-    'length_number', 'delete'
+    'BASE_DIR', 'ORIGINAL', 'EDITOR', 'TRANSLATE', 'ADDITIONAL_FOLDERS',
+    'LENGTH_NUMBER', 'DELETE'
 )
 
 
@@ -19,7 +19,19 @@ def create_window(column, row):
     return window
 
 
+def create_labels(window, strings):
+    labels = {
+        value: tk.Label(window, text=value)
+        for value
+        in strings
+    }
+    for index, key in enumerate(labels):
+        labels[key].grid(column=0, row=index, padx=20, sticky='w')
+    return labels
+
+
 window = create_window(2, 8)
+labels = create_labels(window, name_env)
 
 
 # Команды для Button
@@ -49,10 +61,10 @@ def validate_entry(value):
 entry_validate_wrapper = (window.register(validate_entry), '%P')
 
 # Виджеты
-labels = {}
-for string in name_env:
-    upper = ' '.join(string.split('_')).upper()
-    labels[string.upper()] = tk.Label(window, text=upper)
+# labels = {}
+# for string in name_env:
+#     upper = ' '.join(string.split('_')).upper()
+#     labels[string.upper()] = tk.Label(window, text=upper)
 
 entries: dict = {}
 for string in name_env[:-2]:
@@ -72,8 +84,8 @@ entries['BASE_DIR'].insert(0, 'Симферополь')
 
 # Расположение виджетов
 grid_size = window.grid_size()
-for index, value in enumerate(labels):
-    labels[value].grid(column=0, row=index, padx=20, sticky='w')
+# for index, value in enumerate(labels):
+#     labels[value].grid(column=0, row=index, padx=20, sticky='w')
 for index, value in enumerate(entries):
     entries[value].grid(column=1, row=index, padx=20,)
 buttons['SETTING'].grid(
