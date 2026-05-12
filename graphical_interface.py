@@ -8,7 +8,6 @@ name_env = (
 
 
 def create_window(column, row):
-    """column - столбцы, row - строки."""
     window = tk.Tk()
     window.title('translate_comics')
     window.geometry("350x350")
@@ -30,68 +29,49 @@ def create_labels(window, strings):
     return labels
 
 
-window = create_window(2, 8)
-labels = create_labels(window, name_env)
+def create_entries(window, strings):
+    # Засунуть в поля ввода какое-нибудь значение
+    # entries['BASE_DIR'].insert(0, 'Симферополь')
+    entries = {
+        value: tk.Entry(window)
+        for value
+        in strings
+    }
+    for index, key in enumerate(entries):
+        entries[key].grid(column=1, row=index, padx=20)
+    return entries
 
 
-# Команды для Button
-def setting():
+def setting(strings=name_env):
     """
     При нажатии на кнопку: собирает введённые данные и...
     1) Создает из них файл .env
     2) Возвращает данные
     """
-    for string in name_env[:-1]:
-        print(entries[string.upper()].get())
-    print(var.get())
-    # data = entries['BASE_DIR'].get()
-    # test = filedialog.askdirectory()
-    # print(test)
-    # print(data)
+    dictionary = {
+        string: entries[string].get()
+        for string
+        in strings
+    }
+    global sirop
+    sirop = dictionary
+    window.destroy()
 
 
-# Валидация для Entry
-def validate_entry(value):
-    if True:
-        return True
-    else:
-        return False
+def create_buttons(window, grid_size=(2, 8)):
+    button = tk.Button(window, text='Сохранить', command=setting)
+    button.grid(
+        column=0,
+        columnspan=grid_size[0],
+        row=grid_size[1] - 1
+    )
+    return button
 
 
-entry_validate_wrapper = (window.register(validate_entry), '%P')
-
-# Виджеты
-# labels = {}
-# for string in name_env:
-#     upper = ' '.join(string.split('_')).upper()
-#     labels[string.upper()] = tk.Label(window, text=upper)
-
-entries: dict = {}
-for string in name_env[:-2]:
-    upper = ' '.join(string.split('_')).upper()
-    entries[string.upper()] = tk.Entry(window)
-
-entries[name_env[-2].upper()] = tk.Spinbox(window, from_=1, to=5)
-var = tk.BooleanVar()
-entries[name_env[-1].upper()] = tk.Checkbutton(window, variable=var)
-
-buttons = {
-    'SETTING': tk.Button(window, text='Сохранить', command=setting)
-}
-
-# Засунуть в поля ввода какоенибудь значение
-entries['BASE_DIR'].insert(0, 'Симферополь')
-
-# Расположение виджетов
-grid_size = window.grid_size()
-# for index, value in enumerate(labels):
-#     labels[value].grid(column=0, row=index, padx=20, sticky='w')
-for index, value in enumerate(entries):
-    entries[value].grid(column=1, row=index, padx=20,)
-buttons['SETTING'].grid(
-    column=0,
-    columnspan=grid_size[0],
-    row=grid_size[1] - 1
-)
-
+sirop = ''
+window = create_window(2, 8)
+labels = create_labels(window, name_env)
+entries = create_entries(window, name_env)
+button = create_buttons(window, window.grid_size())
 window.mainloop()
+print(sirop)
