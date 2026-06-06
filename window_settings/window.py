@@ -21,14 +21,14 @@ def window_settings(strings_label):
             'length_number': tk_spinbox(window, 1, 6, settings['length_number'])
         }
 
-    window = tk_window(3, 8)
-    tk_labels(window, string_label, 0)
+    window = tk_window('Settings', 3, 8)
+    tk_labels(window, strings_label, 0)
     default_settings = {
         'base_dir': str(Path('D://', 'Комиксы')),
         'original': 'Original',
         'editor': 'Редактор',
         'translate': 'Перевод',
-        'other_folder': ('Текст',),
+        'other_folder': 'Текст',
         'delete': False,
         'length_number': 2
     }
@@ -36,7 +36,7 @@ def window_settings(strings_label):
         with open('./settings.json', 'r', encoding='utf-8') as file:
             settings = json.load(file)
             settings['other_folder'] = ', '.join(settings['other_folder'])
-    except FileNotFoundError:
+    except (FileNotFoundError, KeyError):
         settings = default_settings
     try:  # Если в файле настроек нет нужных ключей...
         data_widgets = create_data_widgets()

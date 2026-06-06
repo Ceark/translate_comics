@@ -4,12 +4,12 @@ from pathlib import Path
 from tkinter import filedialog
 
 
-def tk_window(column, row):
+def tk_window(title, column, row):
     """
-    Создаие основы, рамки окна настроек.
+    Создание основы, рамки окна настроек.
     """
     window = tk.Tk()
-    window.title('Settings')
+    window.title(title)
     window.geometry("350x350")
     for index in range(column):  # столбцы
         window.columnconfigure(index=index, weight=1)
