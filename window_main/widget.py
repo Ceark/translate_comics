@@ -81,3 +81,50 @@ def field_create_chapters(window, column, row):
     button.grid(column=column, row=row, sticky='s', pady=5)
 
     return button
+
+
+def field_settings(window, column, row):
+    button_settings = tk.Button(
+        window,
+        text='Настройки'
+    )
+    button_settings.grid(
+        column=column, row=row,
+        sticky='n', pady=10
+    )
+
+    button_update = tk.Button(
+        window,
+        text='Применить настройки'
+    )
+    button_update.grid(
+        column=column, row=row,
+        sticky='s', pady=10
+    )
+
+
+def extract_image(window, column, row):
+    button_settings = tk.Button(
+        window,
+        text='Извлечь изображения'
+    )
+    button_settings.grid(
+        column=column, row=row,
+        sticky='n', pady=0
+    )
+
+    str_var = tk.StringVar()
+    glue = tk.Radiobutton(
+        window, text='Клей', variable=str_var, value='glue'
+    )
+    extract = tk.Radiobutton(
+        window, text='Извлечь', variable=str_var, value='extract'
+    )
+    glue.grid(
+        column=column, row=row,
+        sticky='w', pady=10, padx=10
+    )
+    extract.grid(
+        column=column, row=row,
+        sticky='ws', pady=10, padx=10
+    )
