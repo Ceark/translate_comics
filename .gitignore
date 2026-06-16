@@ -1,12 +1,6 @@
 .env
 venv
-venv_14
-pyinstaller
-build
-dist
 main.spec
 __pycache__
 .mypy_cache
 .vscode
-test.py
-experiments
