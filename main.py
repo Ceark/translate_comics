@@ -5,7 +5,7 @@ from pathlib import Path
 from tkinter import ttk
 
 from custom_typing import PythonSettings
-from window_settings import open_settings
+from window_settings.window import open_settings
 
 
 def tk_window(title, geometry, column, row):
