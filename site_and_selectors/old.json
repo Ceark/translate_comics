@@ -1,0 +1,21 @@
+{
+    "tapas": {
+        "parameters": {
+            "selectors": [
+                "article[class=\"viewer__body js-episode-article main__body\"]",
+                "article[class=\"viewer__body js-episode-article main__body hidden js-mature-content\"]"
+            ],
+            "tag": "data-src",
+            "symbol": "*"
+        }
+    },
+    "webtoons": {
+        "parameters": {
+            "selectors": [
+                "div[class=\"viewer_img _img_viewer_area\"]"
+            ],
+            "tag": "data-url",
+            "symbol": "?"
+        }
+    }
+}

@@ -3,7 +3,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog
 
-from .custom_typing import PythonSettings
+from custom_typing import PythonSettings, PythonTwoSettings
 
 
 def window_settings(root_window, title, geometry, column, row):
@@ -18,6 +18,9 @@ def window_settings(root_window, title, geometry, column, row):
 
 
 def tk_labels(window, strings, column, padx):
+    """
+    Заполнит столбец стооками.
+    """
     labels = [
         tk.Label(window, text=string)
         for string
@@ -98,7 +101,11 @@ def save_button(
     """Кнопка сохранения файла настроек."""
     def save_json_file():
         """Сохранить файл настроек рядом с исполняемой программой."""
-        with open(path_settings, 'w', encoding='utf-8') as file:
+        with open(path_settings, 'w', encoding='utf-8') as file: 
+            js_data = {
+                'base_dir': Path(widgets['base_dir'].get())._raw_path,
+                'other_folder': ', '.split(widgets['base_dir'].get())
+            }
             save_data = {
                 key: widgets[key].get()
                 for key

@@ -1,0 +1,9 @@
+{
+    "name_site": "https://tapas.io/",
+    "selectors": [
+        "article[class=\"viewer__body js-episode-article main__body\"]",
+        "article[class=\"viewer__body js-episode-article main__body hidden js-mature-content\"]"
+    ],
+    "tag": "data-src",
+    "symbol": "*"
+}

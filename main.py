@@ -2,29 +2,13 @@ import json
 import tkinter as tk
 from functools import partial
 from pathlib import Path
-from tkinter import ttk
 
+from all_extract import extract, orchestra, unite
 from custom_typing import PythonSettings
+from widgets import row_combobox, tk_window
 from window_settings.window import open_settings
 
-
-def tk_window(title, geometry, column, row):
-    window = tk.Tk()
-    window.title(title)
-    window.geometry(geometry)
-    for index in range(column):  # столбцы
-        window.columnconfigure(index=index, weight=1)
-    for index in range(row):  # строки
-        window.rowconfigure(index=index, weight=1)
-    for i in range(column - 1):
-        sep = ttk.Separator(window, orient='vertical')
-        sep.grid(column=i, row=1, rowspan=row, sticky='ens')
-    for i in range(row - 1):
-        sep = ttk.Separator(window, orient='horizontal')
-        sep.grid(row=i, columnspan=column, sticky='ews')
-    return window
-
-
+# Настройки
 address_settings = Path('settings.json')
 try:
     with open(address_settings, 'r', encoding='utf-8') as file:
@@ -42,52 +26,52 @@ except (FileNotFoundError, ValueError):
         'length_number': 2
     }
 
-main_window = tk_window('tr_comic', '200x200+500+190', 2, 4)
-
-
-# Строка выбор комикса
-def row_combobox(window: tk.Tk, column, row, settings: PythonSettings):
-    def update_combobox(combobox: ttk.Combobox, str_var=tk.StringVar):
-        combobox['values'] = [
-            value.name
-            for value
-            in Path(settings['base_dir']).iterdir()
-            if value.is_dir()
-        ]
-
-    str_var = tk.StringVar()
-    combobox = ttk.Combobox(window, textvariable=str_var, state='readonly')
-    combobox.grid(
-        column=column, row=row, columnspan=window.grid_size()[0],
-        sticky='e', padx=10
-    )
-
-    upadate = partial(update_combobox, combobox)
-    upadate()
-
-    button_update = tk.Button(
-        window,
-        text='\u27F3',
-        command=upadate
-    )
-    button_update.grid(
-        column=column, row=row, columnspan=2, sticky='w', padx=10
-    )
-    return str_var
-
-
+main_window = tk_window('tr_comic', '200x320+500+190', 2, 4)
 base_dir = row_combobox(main_window, 0, 0, settings)
 # Первый столбец
+
+
 # Экстракция
+def extract_image(
+        window: tk.Tk, column, row,
+        settings: PythonSettings, comic: tk.StringVar
+):
+    def command_extraction(func_var: tk.StringVar, name_comic):
+        dict_func = {
+            'copy': extract,
+            'glue': unite
+        }
+        comic_path = Path(settings['base_dir'], name_comic.get())
+        orchestra(dict_func[func_var.get()], comic_path, settings)
+
+    func_var = tk.StringVar(value='copy')
+    rad_copy = tk.Radiobutton(
+        window, text='Копировать', value='copy', variable=func_var
+    )
+    rad_copy.grid(
+        column=column, row=row, sticky='w', padx=5
+    )
+    rad_glue = tk.Radiobutton(
+        window, text='Склеить', value='glue', variable=func_var
+    )
+    rad_glue.grid(
+        column=column, row=row, sticky='sw', pady=5, padx=5
+    )
+
+    extract_command = partial(
+        command_extraction,
+        func_var,
+        comic
+    )
+    button_extraction = tk.Button(
+        main_window, text='Извлечь', command=extract_command
+    )
+    button_extraction.grid(
+        column=column, row=row, sticky='nw', pady=5, padx=5
+    )
 
 
-def command_extraction():
-    pass
-
-
-button_extraction = tk.Button(
-    main_window, text='Экстракция', command=command_extraction
-)
+extract_image(main_window, 0, 1, settings, base_dir)
 # Перемещение
 # Ярлыки
 
