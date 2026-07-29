@@ -2,12 +2,19 @@ import tkinter as tk
 from functools import partial
 from pathlib import Path
 from tkinter import ttk
-from typing import Callable
 
-from custom_typing import PythonSettings
+from custom_typing.custom_typing import Settings
+
+from window_settings.window import open_settings
 
 
-def tk_window(title: str, geometry: str, column: int, row: int):
+def tk_window(
+        title: str, geometry: str,
+        column: int, row: int
+):
+    """
+    Создание главного окна.
+    """
     window = tk.Tk()
     window.title(title)
     window.geometry(geometry)
@@ -25,39 +32,41 @@ def tk_window(title: str, geometry: str, column: int, row: int):
 
 
 def row_combobox(
-        window: tk.Tk, column: int, row: int,
-        settings: PythonSettings
+        window: tk.Tk, settings: Settings,
+        column: int, row: int,
+        str_var: tk.StringVar
 ):
-    def update_combobox(combobox: ttk.Combobox, str_var=tk.StringVar):
-        str_var.set(value='')
-        combobox['values'] = [
-            value.name
-            for value
-            in Path(settings['base_dir']).iterdir()
-            if value.is_dir()
-        ]
-
-    str_var = tk.StringVar()
+    """
+    Строка выбора комикса.
+    """
     combobox = ttk.Combobox(window, textvariable=str_var, state='readonly')
+    combobox['values'] = [
+        value.name
+        for value
+        in Path(settings['base_dir']).iterdir()
+        if value.is_dir()
+    ]
+    if len(combobox['values']):
+        combobox.set(combobox['values'][0])
+        str_var.set(combobox['values'][0])
     combobox.grid(
         column=column, row=row, columnspan=window.grid_size()[0],
-        sticky='e', padx=10
     )
-
-    update = partial(update_combobox, combobox, str_var)
-    update()
-
-    button_update = tk.Button(window, text='\u27F3', command=update)
-    button_update.grid(
-        column=column, row=row, columnspan=2, sticky='w', padx=10
-    )
-    return str_var
+    return combobox
 
 
 def button_settings(
-        window: tk.Tk, text: str, command: Callable,
-        column: int, row: int
+        window: tk.Tk, settings: Settings,
+        column: int, row: int,
+        text: str, strings: tuple[str], widgets_main
 ):
+    command = partial(
+        open_settings,
+        root_window=window,
+        settings=settings,
+        strings=strings,
+        widgets_main=widgets_main
+    )
     button = tk.Button(
         window, text=text, command=command
     )

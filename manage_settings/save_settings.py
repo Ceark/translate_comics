@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from custom_typing_.custom_typing import Settings, SettingsVar
+from custom_typing.custom_typing import Settings, SettingsVar
 
 
 def default_for_path(obj):
@@ -26,6 +26,16 @@ def save_dict_settings(path: Path, settings: Settings, widgets: SettingsVar):
         delete=widgets['delete'].get(),
         length_number=widgets['length_number'].get()
     )
+    # Альтернативный вариант, но на него ругается MyPy
+    """
+    update_settings = {
+        key: widgets[key].get()
+        for key
+        in (Settings.__required_keys__)
+    }
+    update_settings['base_dir'] = Path(widgets['base_dir'].get())
+    update_settings['other_folder'] = widgets['other_folder'].get().split(', ')
+    """
     settings.update(update_settings)
     with open(path, 'w', encoding='utf-8') as file:
         json.dump(

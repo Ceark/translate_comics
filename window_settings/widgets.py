@@ -1,10 +1,9 @@
 import tkinter as tk
 from functools import partial
-from pathlib import Path
 from tkinter import filedialog
 
 from constants import path_settings
-from custom_typing_.custom_typing import Settings, SettingsVar
+from custom_typing.custom_typing import Settings, SettingsVar
 from manage_settings.save_settings import save_dict_settings
 
 
@@ -131,42 +130,3 @@ def save_button(
     command = partial(save_dict_settings, path_settings, settings, widgets)
     button = tk.Button(window, text='Сохранить', command=command)
     button.grid(column=column, row=row, columnspan=window.grid_size()[0])
-    # Альтернативный вариант, но на него ругается MyPy
-    """
-    update_settings = {
-        key: widgets[key].get()
-        for key
-        in (Settings.__required_keys__)
-    }
-    update_settings['base_dir'] = Path(widgets['base_dir'].get())
-    update_settings['other_folder'] = widgets['other_folder'].get().split(', ')
-    """
-
-    # def save_json_file():
-    #     """Сохранить файл настроек рядом с исполняемой программой."""
-    #     with open(path_settings, 'w', encoding='utf-8') as file:
-    #         js_data = {
-    #             'base_dir': Path(widgets['base_dir'].get())._raw_path,
-    #             'other_folder': ', '.split(widgets['base_dir'].get())
-    #         }
-    #         save_data = {
-    #             key: widgets[key].get()
-    #             for key
-    #             in widgets
-    #         }
-    #         json.dump(
-    #             save_data,
-    #             file,
-    #             indent=4,
-    #             ensure_ascii=False
-    #         )
-
-    # def update():
-    #     for key in widgets:
-    #         settings[key] = widgets[key].get()
-
-    # button = tk.Button(
-    #     window, text='Сохранить',
-    #     command=lambda: (save_json_file(), update())
-    # )
-    # button.grid(column=column, row=row, columnspan=window.grid_size()[0])
