@@ -18,7 +18,10 @@ class Settings(TypedDict):
     length_number: int
 
 
-class WidgetsVar(TypedDict):
+class SettingsVar(TypedDict):
+    """
+    Переменные Var для виджетов окна настроек.
+    """
     base_dir: tk.StringVar
     original: tk.StringVar
     editor: tk.StringVar
@@ -29,4 +32,14 @@ class WidgetsVar(TypedDict):
 
 
 class WidgetsMain(TypedDict):
+    """
+    Виджеты главного окна.
+    """
     row_combobox: ttk.Combobox
+
+
+class WidgetsMainVar(TypedDict):
+    """
+    Переменные Var для виджетов главного окна.
+    """
+    row_combobox: tk.StringVar

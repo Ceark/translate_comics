@@ -3,7 +3,7 @@ from functools import partial
 from pathlib import Path
 from tkinter import ttk
 
-from custom_typing.custom_typing import Settings, WidgetsMain
+from custom_typing.custom_typing import Settings, WidgetsMain, WidgetsMainVar
 from window_settings.window import open_settings
 
 
@@ -46,7 +46,6 @@ def row_combobox(
         if value.is_dir()
     ]
     if len(combobox['values']):
-        combobox.set(combobox['values'][0])
         str_var.set(combobox['values'][0])
     combobox.grid(
         column=column, row=row, columnspan=window.grid_size()[0],
@@ -57,14 +56,19 @@ def row_combobox(
 def button_settings(
         window: tk.Tk, settings: Settings,
         column: int, row: int,
-        text: str, strings: tuple[str], widgets_main: WidgetsMain
+        text: str, strings: tuple[str],
+        widgets_main: WidgetsMain, widgets_main_var: WidgetsMainVar
 ):
+    """
+    Кнопка открытия окна настроек в глваном окне.
+    """
     command = partial(
         open_settings,
         root_window=window,
         settings=settings,
         strings=strings,
-        widgets_main=widgets_main
+        widgets_main=widgets_main,
+        widgets_main_var=widgets_main_var
     )
     button = tk.Button(
         window, text=text, command=command

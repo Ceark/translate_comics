@@ -1,12 +1,10 @@
 import tkinter as tk
 from functools import partial
-from pathlib import Path
-from tkinter import filedialog, ttk
 
-from constants import path_settings
-from custom_typing.custom_typing import Settings, WidgetsVar, WidgetsMain
-from manage_settings.save_settings import save_dict_settings
-from .functions import update_settings
+from custom_typing.custom_typing import (Settings, SettingsVar, WidgetsMain,
+                                         WidgetsMainVar)
+
+from .functions import button_choose, update_settings
 
 
 def window_settings(
@@ -48,12 +46,6 @@ def tk_labels(
             padx=padx,
             sticky='w'
         )
-
-
-def button_choose(string_var: tk.StringVar):
-    path = filedialog.askdirectory()
-    if not path == '.':
-        string_var.set(path)
 
 
 def first_row(
@@ -126,11 +118,14 @@ def save_button(
         window: tk.Toplevel,
         column: int, row: int,
         settings: Settings,
-        widgets_var: WidgetsVar,
-        widgets_main: WidgetsMain
+        widgets_var: SettingsVar,
+        widgets_main: WidgetsMain,
+        widgets_main_var: WidgetsMainVar
 ):
     """Кнопка сохранения файла настроек."""
-    command = partial(update_settings, settings, widgets_var, widgets_main)
-    # command = partial(save_dict_settings, path_settings, settings, widgets_var)
+    command = partial(
+        update_settings, settings, widgets_var, widgets_main,
+        widgets_main_var
+    )
     button = tk.Button(window, text='Сохранить', command=command)
     button.grid(column=column, row=row, columnspan=window.grid_size()[0])
