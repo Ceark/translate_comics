@@ -1,5 +1,6 @@
 import tkinter as tk
 from pathlib import Path
+from tkinter import ttk
 from typing import TypedDict
 
 
@@ -17,7 +18,7 @@ class Settings(TypedDict):
     length_number: int
 
 
-class SettingsVar(TypedDict):
+class WidgetsVar(TypedDict):
     base_dir: tk.StringVar
     original: tk.StringVar
     editor: tk.StringVar
@@ -25,3 +26,7 @@ class SettingsVar(TypedDict):
     other_folder: tk.StringVar
     delete: tk.BooleanVar
     length_number: tk.IntVar
+
+
+class WidgetsMain(TypedDict):
+    row_combobox: ttk.Combobox

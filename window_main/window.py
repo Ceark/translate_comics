@@ -2,7 +2,7 @@ import tkinter as tk
 from pathlib import Path
 
 from constants import strings
-from custom_typing.custom_typing import Settings
+from custom_typing.custom_typing import Settings, WidgetsMain
 
 from .widgets import button_settings, row_combobox, tk_window
 
@@ -15,7 +15,7 @@ def open_main(
     dif_var = {
         'row_combobox': tk.StringVar()
     }
-    widgets_one = {
+    widgets_main: WidgetsMain = {
         'row_combobox': row_combobox(
             window=window, settings=settings,
             column=0, row=0,
@@ -27,7 +27,7 @@ def open_main(
             window=window, settings=settings,
             column=1, row=3,
             text='Настройки', strings=strings,
-            widgets_main=widgets_one
+            widgets_main=widgets_main
         )
     }
 

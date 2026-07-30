@@ -1,6 +1,7 @@
 import tkinter as tk
+from tkinter import ttk
 
-from custom_typing.custom_typing import Settings, SettingsVar
+from custom_typing.custom_typing import Settings, WidgetsVar, WidgetsMain
 
 from .widgets import (first_row, folder_name, save_button, tk_checkbutton,
                       tk_labels, tk_spinbox, window_settings)
@@ -10,11 +11,11 @@ def open_settings(
         root_window: tk.Tk,
         settings: Settings,
         strings: tuple,
-        widgets_main: dict
+        widgets_main: WidgetsMain
 ):
     window = window_settings(root_window, 'Settings', '300x300+550+220', 3, 8)
     tk_labels(window, strings, 0, 5)
-    widgets = SettingsVar(
+    widgets_var = WidgetsVar(
         base_dir=first_row(window, 1, 0, str(settings['base_dir'])),
         original=folder_name(window, 1, 1, settings['original']),
         editor=folder_name(window, 1, 2, settings['editor']),
@@ -28,5 +29,6 @@ def open_settings(
     save_button(
          window=window,
          column=0, row=7,
-         settings=settings, widgets=widgets,
+         settings=settings,
+         widgets_var=widgets_var, widgets_main=widgets_main
     )

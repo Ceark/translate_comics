@@ -3,8 +3,7 @@ from functools import partial
 from pathlib import Path
 from tkinter import ttk
 
-from custom_typing.custom_typing import Settings
-
+from custom_typing.custom_typing import Settings, WidgetsMain
 from window_settings.window import open_settings
 
 
@@ -58,7 +57,7 @@ def row_combobox(
 def button_settings(
         window: tk.Tk, settings: Settings,
         column: int, row: int,
-        text: str, strings: tuple[str], widgets_main
+        text: str, strings: tuple[str], widgets_main: WidgetsMain
 ):
     command = partial(
         open_settings,
