@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from custom_typing.custom_typing import Settings
+from custom_class.custom_class import Chapter
 
 default_settings: Settings = {
     'base_dir': Path().cwd(),
@@ -43,4 +44,13 @@ def load_settings(path: Path) -> Settings:
             )
             return settings
     except (FileNotFoundError, Exception):
-        return default_settings
+        settings = default_settings
+
+    technical_folder = [
+        settings['original'],
+        settings['editor'],
+        settings['translate']
+    ] + settings['other_folder']
+    Chapter.update_technical_folder(technical_folder)
+
+    return settings

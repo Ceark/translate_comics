@@ -43,3 +43,10 @@ class WidgetsMainVar(TypedDict):
     Переменные Var для виджетов главного окна.
     """
     row_combobox: tk.StringVar
+
+
+class SiteSelectors(TypedDict):
+    name_site: str
+    selector: str
+    tag: str
+    symbol: str

@@ -126,7 +126,11 @@ def name_image(site: bs4.BeautifulSoup, scheme: Site):
         parts = site.select(selector)
         for part in parts:
             elems = [
-                Path(str(child.attrs[scheme.tag])).name.partition(scheme.symbol)[0]
+                Path(
+                    str(
+                        child.attrs[scheme.tag]
+                    )
+                ).name.partition(scheme.symbol)[0]
                 for child
                 in part.children
                 if isinstance(child, bs4.element.Tag)

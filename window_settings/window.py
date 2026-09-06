@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import ttk
 
 from custom_typing.custom_typing import (Settings, WidgetsMain, WidgetsMainVar,
                                          SettingsVar)

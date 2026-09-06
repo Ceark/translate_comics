@@ -1,11 +1,11 @@
 import tkinter as tk
-from functools import partial
 from pathlib import Path
-from tkinter import filedialog, ttk
+from tkinter import filedialog
 
 from constants import path_settings
-from custom_typing.custom_typing import (Settings, WidgetsMain, WidgetsMainVar,
-                                         SettingsVar)
+from custom_class.custom_class import Chapter
+from custom_typing.custom_typing import (Settings, SettingsVar, WidgetsMain,
+                                         WidgetsMainVar)
 from manage_settings.save_settings import save_dict_settings
 
 
@@ -50,6 +50,13 @@ def update_settings(
     """
     settings.update(new_settings)
     save_dict_settings(path=path_settings, dct=new_settings)
+
+    technical_folder = [
+        new_settings['original'],
+        new_settings['editor'],
+        new_settings['translate']
+    ] + new_settings['other_folder']
+    Chapter.update_technical_folder(technical_folder)
 
     widgets_main['row_combobox']['values'] = [
         value.name
