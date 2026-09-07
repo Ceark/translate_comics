@@ -20,7 +20,7 @@ class Chapter(Path):
                 string += symbol
             else:
                 break
-        return string
+        return int(string)
 
     def create(self):
         """
@@ -28,3 +28,12 @@ class Chapter(Path):
         """
         for folder in self.technical_folder:
             (self / folder).mkdir(parents=True, exist_ok=True)
+
+    def is_chapter(self) -> bool:
+        if (
+            self.name not in self.technical_folder
+            and self.name[0].isdecimal()
+            and self.is_dir()
+        ):
+            return True
+        return False

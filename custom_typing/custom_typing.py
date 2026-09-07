@@ -47,6 +47,6 @@ class WidgetsMainVar(TypedDict):
 
 class SiteSelectors(TypedDict):
     name_site: str
-    selector: str
+    selectors: list[str]
     tag: str
     symbol: str
