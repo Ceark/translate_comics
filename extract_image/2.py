@@ -35,9 +35,8 @@ def unite(images: list[Path], target: Path):
     for image in images:
         with Image.open(image) as img:
             height += img.height
+            width = max(width, img.width)
             coordinates.append((0, height))
-    with Image.open(image) as img:
-        width = img.width
     with Image.new('RGB', (width, height)) as union:
         for index, image in enumerate(images):
             with Image.open(image) as img:
@@ -61,7 +60,7 @@ def list_chapters(comic: Path):
     return chapters
 
 
-def search_htm_files(comic: Path) -> list[tuple[Path, Path]]:
+def search_htm_files(comic: Path):
     """
     Функция возвращает список кортежей, состоящих из адреса htm-файла и адреса
     его папки с файлами.
@@ -157,22 +156,26 @@ def general_extract(
     method(images=images_path, target=target)
 
 
+def specify_target(htm_file: Path, comic: Path):
+    if htm_file.parent == comic:
+        max_number = max(
+            list_chapters(comic),
+            key=lambda i: Chapter(i).number
+        ).number
+        Chapter(comic, str(max_number)).create()
+        target = Path(comic, str(max_number), settings['original'])
+    elif len(htm_file.parts) - len(comic.parts) > 1:
+        target = Path(
+            htm_file.parents[len(htm_file.parts) - len(comic.parts) - 2],
+            settings['original']
+        )
+    return target
+
+
 def orchestra(settings: Settings, comic: Path, method: Callable):
     htm_files = search_htm_files(comic)
     for site_file, site_dir in htm_files:
-        # Если файл сайта находится в папке комикса
-        if site_file.parents[0] == comic:
-            max_number = max(
-                list_chapters(comic),
-                key=lambda i: Chapter(i).number
-            ).number
-            Chapter(comic, str(max_number)).create()
-            target = Path(comic, str(max_number), settings['original'])
-        # Если файл сайта находится где-то еще
-        elif site_file.parents[1] == comic:  # В папке части
-            target = site_file.parent / settings['original']
-        elif site_file.parents[2] == comic:  # В подпапке части
-            target = site_file.parent / settings['original']
+        target = specify_target(site_file, comic)
 
         with open(site_file, "r", encoding="utf-8") as fl:
             example_soup = bs4.BeautifulSoup(

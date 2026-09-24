@@ -1,7 +1,8 @@
 from pathlib import Path
 
 path_settings = Path('settings.json')
-strings: tuple[str] = (
+path_site_and_selectors = Path('site_and_selectors')
+strings = (
     'Комиксы',
     'Оригинал',
     'Редактор',

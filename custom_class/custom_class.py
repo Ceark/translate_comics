@@ -79,9 +79,20 @@ class Comic(Folder):
             return number
         return int(number.number)
 
+    def create_chapter(self) -> Path:
+        """Создать подпапку, главу комикса.
+
+        Возвращает адрес созданной папки."""
+        new_chapter = str(self.number_last_chapter() + 1)
+        for folder in self.technical_folders:
+            (self / new_chapter / folder).mkdir(exist_ok=True, parents=True)
+        return Path(self, new_chapter)
+
     def create_chapters(self, quantity=1):
-        """Создать подпапку, главу комикса."""
+        """Создать несколько глав комикса."""
         new_chapter = self.number_last_chapter() + 1
         for number in range(new_chapter, new_chapter + quantity):
             for folder in self.technical_folders:
-                (self / number / folder).mkdir(exist_ok=True, parents=True)
+                Path(self, str(number), folder).mkdir(
+                    exist_ok=True, parents=True
+                )
