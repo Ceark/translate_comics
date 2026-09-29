@@ -97,7 +97,7 @@ def validate_images(image_names: list[str], htm_folder: Path) -> list[Path]:
     if len(image_names) == len(images_path):
         return images_path
     else:
-        raise Exception
+        raise FileNotFoundError
 
 
 def orchestra(comic: Comic, method: Callable, delete: bool, target: str):
@@ -117,7 +117,10 @@ def orchestra(comic: Comic, method: Callable, delete: bool, target: str):
         if not site_scheme:
             continue
         image_names = search_name_image(example_soup, site_scheme)
-        image_paths = validate_images(image_names, folder)
+        try:
+            image_paths = validate_images(image_names, folder)
+        except FileNotFoundError:
+            continue
         method(images=image_paths, target=folder.parent / target)
         if delete:
             send2trash.send2trash([htm, folder])
