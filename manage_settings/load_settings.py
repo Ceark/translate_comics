@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
 
-from custom_typing.custom_typing import Settings
-from custom_class.custom_class import Chapter
+from custom.clas import Chapter
+from custom.typing import Settings
+
 
 default_settings: Settings = {
     'base_dir': Path().cwd(),

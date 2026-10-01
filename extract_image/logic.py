@@ -7,7 +7,7 @@ import bs4
 import send2trash
 
 from constants import path_site_and_selectors
-from custom_class.custom_class import Comic
+from custom.clas import Comic
 from custom_typing.custom_typing import SiteSelectors
 
 
