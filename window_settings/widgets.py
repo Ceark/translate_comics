@@ -1,8 +1,7 @@
 import tkinter as tk
 from functools import partial
 
-from custom_typing.custom_typing import (Settings, SettingsVar, WidgetsMain,
-                                         WidgetsMainVar)
+from custom.typing import Settings, SettingsVar, WidgetsMain, WidgetsMainVar
 
 from .functions import button_choose, update_settings
 

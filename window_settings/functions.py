@@ -3,9 +3,8 @@ from pathlib import Path
 from tkinter import filedialog
 
 from constants import path_settings
-from custom_class.custom_class import Chapter
-from custom_typing.custom_typing import (Settings, SettingsVar, WidgetsMain,
-                                         WidgetsMainVar)
+from custom.klass import Chapter
+from custom.typing import Settings, SettingsVar, WidgetsMain, WidgetsMainVar
 from manage_settings.save_settings import save_dict_settings
 
 

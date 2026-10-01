@@ -3,7 +3,7 @@ from functools import partial
 from pathlib import Path
 from tkinter import ttk
 
-from custom_typing.custom_typing import Settings, WidgetsMain, WidgetsMainVar
+from custom.typing import Settings, WidgetsMain, WidgetsMainVar
 from window_settings.window import open_settings
 
 

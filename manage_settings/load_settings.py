@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
 
-from custom.clas import Chapter
+from custom.klass import Folder, update_union
 from custom.typing import Settings
-
 
 default_settings: Settings = {
     'base_dir': Path().cwd(),
@@ -52,6 +51,6 @@ def load_settings(path: Path) -> Settings:
         settings['editor'],
         settings['translate']
     ] + settings['other_folder']
-    Chapter.update_technical_folder(technical_folder)
+    update_union(Folder.technical_folders, technical_folder)
 
     return settings

@@ -2,20 +2,16 @@ from pathlib import Path
 import re
 
 
+def update_union(old_list: list[str], new_list: list[str]):
+    """Заменить содежимое списка содержимым другого списка."""
+    old_list.clear()
+    old_list.extend(new_list)
+
+
 class Folder(Path):
     """Заготовка папки."""
     technical_folders: list[str] = []
     ignored_folders: list[str] = []
-
-    def update_union(self, old_list: list[str], new_list: list[str]):
-        """
-        Заменить содежимое списка содержимым другого списка.
-
-        Предполагается, что эта функция применяется для обновления содержимого
-        self.technical_folders и self.ignored_folders.
-        """
-        old_list.clear()
-        old_list.extend(new_list)
 
     @property
     def union_folders(self):

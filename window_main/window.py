@@ -2,7 +2,7 @@ import tkinter as tk
 from pathlib import Path
 
 from constants import strings
-from custom_typing.custom_typing import Settings, WidgetsMain, WidgetsMainVar
+from custom.typing import Settings, WidgetsMain, WidgetsMainVar
 
 from .widgets import button_settings, row_combobox, tk_window
 

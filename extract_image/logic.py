@@ -7,8 +7,8 @@ import bs4
 import send2trash
 
 from constants import path_site_and_selectors
-from custom.clas import Comic
-from custom_typing.custom_typing import SiteSelectors
+from custom.klass import Comic
+from custom.typing import SiteSelectors
 
 
 def search_htm_files(comic: Path) -> list[tuple[Path, Path]]:

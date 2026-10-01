@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from custom_typing.custom_typing import Settings
+from custom.typing import Settings
 
 
 def default_for_path(obj):

@@ -1,7 +1,6 @@
 import tkinter as tk
 
-from custom_typing.custom_typing import (Settings, WidgetsMain, WidgetsMainVar,
-                                         SettingsVar)
+from custom.typing import Settings, SettingsVar, WidgetsMain, WidgetsMainVar
 
 from .widgets import (first_row, folder_name, save_button, tk_checkbutton,
                       tk_labels, tk_spinbox, window_settings)
