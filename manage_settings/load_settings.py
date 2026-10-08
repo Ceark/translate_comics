@@ -42,7 +42,6 @@ def load_settings(path: Path) -> Settings:
             settings: Settings = json.load(
                 file, object_hook=custom_object_hook
             )
-            return settings
     except (FileNotFoundError, Exception):
         settings = default_settings
 
@@ -52,5 +51,6 @@ def load_settings(path: Path) -> Settings:
         settings['translate']
     ] + settings['other_folder']
     update_union(Folder.technical_folders, technical_folder)
+    Folder.settings = settings
 
     return settings

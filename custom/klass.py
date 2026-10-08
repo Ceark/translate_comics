@@ -1,5 +1,7 @@
-from pathlib import Path
 import re
+from pathlib import Path
+
+from custom.typing import Settings
 
 
 def update_union(old_list: list[str], new_list: list[str]):
@@ -12,6 +14,7 @@ class Folder(Path):
     """Заготовка папки."""
     technical_folders: list[str] = []
     ignored_folders: list[str] = []
+    settings = Settings()
 
     @property
     def union_folders(self):
@@ -70,7 +73,9 @@ class Comic(Folder):
 
         Возвращает наибольший номер главы, преобразованный в int.
         Если глав нет, то возвращает 0."""
-        number = max(self.list_chapters(), key=Chapter.number, default=0)
+        number = max(
+            self.list_chapters(), key=lambda x: Chapter(x).number, default=0
+        )
         if isinstance(number, int):
             return number
         return int(number.number)
@@ -79,7 +84,10 @@ class Comic(Folder):
         """Создать подпапку, главу комикса.
 
         Возвращает адрес созданной папки."""
-        new_chapter = str(self.number_last_chapter() + 1)
+        new_chapter = str(
+            self.number_last_chapter() + 1
+        ).rjust(self.settings['length_number'], '0')
+        (self / new_chapter).mkdir(exist_ok=True, parents=True)
         for folder in self.technical_folders:
             (self / new_chapter / folder).mkdir(exist_ok=True, parents=True)
         return Path(self, new_chapter)

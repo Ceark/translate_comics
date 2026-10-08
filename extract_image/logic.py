@@ -7,7 +7,7 @@ import bs4
 import send2trash
 
 from constants import path_site_and_selectors
-from custom.klass import Comic
+from custom.klass import Comic, Chapter
 from custom.typing import SiteSelectors
 
 
@@ -33,7 +33,10 @@ def specify_target(
             Path(shutil.move(htm, new_chapter)),
             Path(shutil.move(htm_folder, new_chapter))
         )
-    elif len(htm.parts) - len(comic.parts) > 1:
+    elif (
+        len(htm.parts) - len(comic.parts) > 1
+        and not Chapter(comic, htm.parts[-2]).is_chapter()
+    ):
         chapter = htm.parents[len(htm.parts) - len(comic.parts) - 2]
         return (
             Path(shutil.move(htm, chapter)),
@@ -121,6 +124,7 @@ def orchestra(comic: Comic, method: Callable, delete: bool, target: str):
             image_paths = validate_images(image_names, folder)
         except FileNotFoundError:
             continue
+        (folder.parent / target).mkdir(exist_ok=True)
         method(images=image_paths, target=folder.parent / target)
         if delete:
             send2trash.send2trash([htm, folder])
