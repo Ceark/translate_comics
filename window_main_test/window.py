@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 
-from custom.klass import Comic
+from win32com.client import Dispatch
+
+from custom.klass import Chapter, Comic
 from custom.typing import Settings
 from extract_image.functions import copy_images, unite
 from extract_image.logic import orchestra
@@ -56,8 +58,8 @@ def open_main(settings: Settings):
     rad_union = ttk.Radiobutton(
         mainframe, text='Объеденить', variable=regime_var, value='union'
     )
-    rad_copy.grid(column=0, row=1, sticky='nw', pady=5, padx=5)
-    rad_union.grid(column=0, row=1, sticky='ne', pady=5, padx=5)
+    rad_copy.grid(column=0, row=1, sticky='nw', pady=10, padx=10)
+    rad_union.grid(column=0, row=1, sticky='w', padx=10)
     func_extract = {
         'copy': copy_images,
         'union': unite
@@ -65,6 +67,7 @@ def open_main(settings: Settings):
 
     # # Кнопка экстракции
     def func_for_button_extract():
+        """Функция для кнопки экстракции."""
         func = func_extract[regime_var.get()]
         comic = Comic(settings['base_dir'] / var_comics_list.get())
         orchestra(comic, func, settings['delete'], settings['original'])
@@ -72,6 +75,57 @@ def open_main(settings: Settings):
     button_extract = ttk.Button(
         mainframe, command=func_for_button_extract, text='Извлечь'
     )
-    button_extract.grid(column=0, row=1, padx=5, pady=10)
+    button_extract.grid(column=0, row=1, padx=10, pady=10, sticky='s')
 
+    # Добавить часть
+
+    # Переместить изображения
+
+    # Создать ярлыки
+    # # Выпадающий список с техническими папками
+    var_tech_folders_shortcut = tk.StringVar()
+    combobox_shortcut = ttk.Combobox(
+        mainframe,
+        textvariable=var_tech_folders_shortcut,
+        state='readonly'
+    )
+    combobox_shortcut['values'] = Comic.technical_folders
+    if len(combobox_shortcut['values']):
+        var_tech_folders_shortcut.set(combobox_shortcut['values'][0])
+    combobox_shortcut.grid(column=1, row=1, pady=5, sticky='n')
+
+    # # Кнопка создания ярлыков
+    def shortcut(shortcut_path: str, target_path: str):
+        """
+        Функция создания ярлыка.
+
+        - shortcut_path - адрес ярлыка;
+        - target_path - файл, для которого создаётся ярлык;
+        """
+        shell = Dispatch('WScript.Shell')
+        shortcut = shell.CreateShortCut(shortcut_path)
+        shortcut.Targetpath = target_path
+        shortcut.save()
+
+    def command_shortcut():
+        comic = Comic(settings['base_dir'] / var_comics_list.get())
+        shortcut_folder = comic / var_tech_folders_shortcut.get()
+        shortcut_folder.mkdir(exist_ok=True)
+        for chapter in comic.list_chapters():
+            chapter_folder = chapter / combobox_shortcut.get()
+            chapter_folder.mkdir(exist_ok=True)
+            for obj in chapter_folder.iterdir():
+                shortcut_name = str(chapter.number) + '_' + obj.stem + '.lnk'
+                shortcut_path = shortcut_folder / shortcut_name
+                shortcut(
+                    shortcut_path=str(shortcut_path),
+                    target_path=str(obj)
+                )
+
+    button_shortcut = ttk.Button(
+        mainframe, text='Создать ярлыки', command=command_shortcut
+    )
+    button_shortcut.grid(column=1, row=1, pady=5, sticky='s')
+
+    # Запуск окна
     window.mainloop()
