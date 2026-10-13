@@ -97,6 +97,10 @@ class Comic(Folder):
         new_chapter = self.number_last_chapter() + 1
         for number in range(new_chapter, new_chapter + quantity):
             for folder in self.technical_folders:
-                Path(self, str(number), folder).mkdir(
+                Path(
+                    self,
+                    str(number).rjust(self.settings['length_number'], '0'),
+                    folder
+                ).mkdir(
                     exist_ok=True, parents=True
                 )

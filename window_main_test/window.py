@@ -1,3 +1,4 @@
+import re
 import tkinter as tk
 from tkinter import ttk
 
@@ -22,14 +23,16 @@ def open_main(settings: Settings):
     mainframe.grid(column=0, row=0, sticky='nsew')
     for i in range(2):
         mainframe.columnconfigure(i, weight=1)
-    for i in range(2):
+    for i in range(3):
         mainframe.rowconfigure(i, weight=1)
 
     # Сепараторы
     sep = ttk.Separator(mainframe, orient='horizontal')
     sep.grid(column=0, row=0, columnspan=2, sticky='swe')
+    sep_two = ttk.Separator(mainframe, orient='horizontal')
+    sep_two.grid(column=0, row=1, columnspan=2, sticky='swe')
     sep = ttk.Separator(mainframe, orient='vertical')
-    sep.grid(column=0, row=1, rowspan=1, sticky='nse')
+    sep.grid(column=0, row=1, rowspan=2, sticky='nse')
 
     # Выпадающий список комиксов
     var_comics_list = tk.StringVar()
@@ -66,18 +69,43 @@ def open_main(settings: Settings):
     }
 
     # # Кнопка экстракции
-    def func_for_button_extract():
+    def command_extract():
         """Функция для кнопки экстракции."""
         func = func_extract[regime_var.get()]
         comic = Comic(settings['base_dir'] / var_comics_list.get())
         orchestra(comic, func, settings['delete'], settings['original'])
 
     button_extract = ttk.Button(
-        mainframe, command=func_for_button_extract, text='Извлечь'
+        mainframe, command=command_extract, text='Извлечь'
     )
     button_extract.grid(column=0, row=1, padx=10, pady=10, sticky='s')
 
     # Добавить часть
+    # # Сколько частей добавлять
+    def check_num(newval):
+        return re.match('^[0-9]*$', newval) is not None and len(newval) <= 5
+    check_num_wrapper = (mainframe.register(check_num), '%P')
+
+    var_add_chapter = tk.IntVar(value=1)
+    entry_add_chapter = tk.Entry(
+        mainframe, textvariable=var_add_chapter,
+        validate='key', validatecommand=check_num_wrapper,
+        width=10, justify='center'
+    )
+    entry_add_chapter.grid(column=0, row=2, sticky='n', padx=5, pady=5)
+
+    def command_add_chapter():
+        """Функция для кнопки добавления части."""
+        comic = Comic(settings['base_dir'] / var_comics_list.get())
+        quantity = var_add_chapter.get()
+        comic.create_chapters(quantity)
+
+    button_add_chapter = ttk.Button(
+        mainframe,
+        command=command_add_chapter,
+        text='Добавить часть'
+    )
+    button_add_chapter.grid(column=0, row=2, sticky='s', padx=5, pady=5)
 
     # Переместить изображения
 
@@ -97,7 +125,7 @@ def open_main(settings: Settings):
     # # Кнопка создания ярлыков
     def shortcut(shortcut_path: str, target_path: str):
         """
-        Функция создания ярлыка.
+        Функция создания ярлыка, Windows.
 
         - shortcut_path - адрес ярлыка;
         - target_path - файл, для которого создаётся ярлык;
@@ -108,6 +136,7 @@ def open_main(settings: Settings):
         shortcut.save()
 
     def command_shortcut():
+        """Команда для кнопки создания ярлыков, только для Windows."""
         comic = Comic(settings['base_dir'] / var_comics_list.get())
         shortcut_folder = comic / var_tech_folders_shortcut.get()
         shortcut_folder.mkdir(exist_ok=True)
