@@ -1,6 +1,7 @@
 import re
 import tkinter as tk
-from tkinter import ttk
+from shutil import move
+from tkinter import font, ttk
 
 from win32com.client import Dispatch
 
@@ -14,7 +15,7 @@ def open_main(settings: Settings):
     # Главное окно
     window = tk.Tk()
     window.title('tr_comic')
-    window.geometry('300x300')
+    window.geometry('355x300')
     window.columnconfigure(0, weight=1)
     window.rowconfigure(0, weight=1)
 
@@ -108,6 +109,64 @@ def open_main(settings: Settings):
     button_add_chapter.grid(column=0, row=2, sticky='s', padx=5, pady=5)
 
     # Переместить изображения
+    var_where_from = tk.StringVar(value=settings['editor'])
+    var_where_to = tk.StringVar(value=settings['translate'])
+    var_suffix = tk.StringVar(value='*.png')
+
+    values = [
+        settings['original'],
+        settings['editor'],
+        settings['translate']
+    ] + settings['other_folder']
+    combobox_where_from = ttk.Combobox(
+        mainframe,
+        textvariable=var_where_from,
+        state='readonly',
+        width=10,
+        values=values
+    )
+    combobox_where_from.grid(column=1, row=2, padx=5, pady=5, sticky='nw')
+    combobox_where_to = ttk.Combobox(
+        mainframe,
+        textvariable=var_where_to,
+        state='readonly',
+        width=10,
+        values=values
+    )
+    combobox_where_to.grid(column=1, row=2, padx=5, pady=5, sticky='ne')
+
+    symbol_arrow = tk.Label(mainframe, text='\u279d')
+    symbol_arrow.grid(column=1, row=2, padx=5, pady=5, sticky='n')
+
+    def check_suffix(newval):
+        return re.match(r'^\*\..*$', newval) is not None
+    check_suffix_wrapper = (mainframe.register(check_suffix), '%P')
+
+    entry_suffix = ttk.Entry(
+        mainframe, validatecommand=check_suffix_wrapper,
+        width=8, validate='key',
+        justify='center', textvariable=var_suffix
+    )
+    entry_suffix.grid(column=1, row=2)
+
+    def command_move_files():
+        comic = Comic(settings['base_dir'] / var_comics_list.get())
+        folder_from = var_where_from.get()
+        folder_to = var_where_to.get()
+        suffix = var_suffix.get()
+        for chapter in comic.list_chapters():
+            for fl in (comic / chapter / folder_from).glob(suffix):
+                move(
+                    fl,
+                    comic / chapter / folder_to
+                )
+
+    button_move_file = ttk.Button(
+        mainframe,
+        command=command_move_files,
+        text='Переместить'
+    )
+    button_move_file.grid(column=1, row=2, sticky='s', pady=5)
 
     # Создать ярлыки
     # # Выпадающий список с техническими папками
