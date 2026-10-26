@@ -28,7 +28,7 @@ def specify_target(
 ) -> tuple[Path, Path]:
     """Разместить файл комикса и папку с его файлами в папке части."""
     if htm.parent == comic:
-        new_chapter = comic.create_chapter()
+        new_chapter = comic.create_chapters()
         return (
             Path(shutil.move(htm, new_chapter)),
             Path(shutil.move(htm_folder, new_chapter))

@@ -36,6 +36,10 @@ class Chapter(Folder):
         except AttributeError:
             return 0
 
+    @property
+    def rjust_number(self) -> str:
+        return str(self.number).rjust(self.settings['length_number'], '0')
+
     def is_chapter(self) -> bool:
         if (
             self.name not in self.union_folders
@@ -80,27 +84,16 @@ class Comic(Folder):
             return number
         return int(number.number)
 
-    def create_chapter(self) -> Path:
-        """Создать подпапку, главу комикса.
-
-        Возвращает адрес созданной папки."""
-        new_chapter = str(
-            self.number_last_chapter() + 1
-        ).rjust(self.settings['length_number'], '0')
-        (self / new_chapter).mkdir(exist_ok=True, parents=True)
-        for folder in self.technical_folders:
-            (self / new_chapter / folder).mkdir(exist_ok=True, parents=True)
-        return Path(self, new_chapter)
-
     def create_chapters(self, quantity=1):
         """Создать несколько глав комикса."""
-        new_chapter = self.number_last_chapter() + 1
-        for number in range(new_chapter, new_chapter + quantity):
+        number = self.number_last_chapter() + 1
+        for number in range(number, number + quantity):
             for folder in self.technical_folders:
-                Path(
-                    self,
-                    str(number).rjust(self.settings['length_number'], '0'),
-                    folder
-                ).mkdir(
+                new_chapter = str(number).rjust(
+                    self.settings['length_number'], '0'
+                )
+                Path(self, new_chapter, folder).mkdir(
                     exist_ok=True, parents=True
                 )
+        if quantity == 1:
+            return Path(self, new_chapter)
