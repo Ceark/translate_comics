@@ -38,11 +38,17 @@ class WidgetsMain(TypedDict):
     row_combobox: ttk.Combobox
 
 
-class WidgetsMainVar(TypedDict):
+class DictVariable(TypedDict):
     """
     Переменные Var для виджетов главного окна.
     """
-    row_combobox: tk.StringVar
+    comic: tk.StringVar
+    regime: tk.StringVar
+    quantity: tk.IntVar
+    where_from: tk.StringVar
+    where_to: tk.StringVar
+    suffix: tk.StringVar
+    folders: tk.StringVar
 
 
 class SiteSelectors(TypedDict):

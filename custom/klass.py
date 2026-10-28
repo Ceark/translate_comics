@@ -28,7 +28,7 @@ class Chapter(Folder):
     """
     @property
     def number(self) -> int | float:
-        """Номер главы комикса."""
+        """Номер главы комикса в виде числа."""
         try:
             pattern = re.compile(r'\d+(?:\.\d+)?')
             number = pattern.match(self.name).group()
@@ -38,6 +38,7 @@ class Chapter(Folder):
 
     @property
     def rjust_number(self) -> str:
+        """Номер главы комикса в виде строки с учетом length_number."""
         return str(self.number).rjust(self.settings['length_number'], '0')
 
     def is_chapter(self) -> bool:
