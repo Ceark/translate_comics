@@ -1,7 +1,14 @@
 import tkinter as tk
 from pathlib import Path
-from tkinter import ttk
 from typing import TypedDict
+
+# from tkinter import ttk
+
+
+class MoveImagesSettings(TypedDict):
+    where: str
+    to: str
+    suffix: str
 
 
 class Settings(TypedDict):
@@ -14,8 +21,16 @@ class Settings(TypedDict):
     editor: str
     translate: str
     other_folder: list[str]
+    ignore_folder: list[str]
     delete: bool
     length_number: int
+    move_images: MoveImagesSettings
+
+
+class MoveImagesSettingsVar(TypedDict):
+    where: tk.StringVar
+    to: tk.StringVar
+    suffix: tk.StringVar
 
 
 class SettingsVar(TypedDict):
@@ -27,8 +42,10 @@ class SettingsVar(TypedDict):
     editor: tk.StringVar
     translate: tk.StringVar
     other_folder: tk.StringVar
+    ignore_folder: tk.StringVar
     delete: tk.BooleanVar
     length_number: tk.IntVar
+    move_images: MoveImagesSettingsVar
 
 
 class WidgetsMain(TypedDict):

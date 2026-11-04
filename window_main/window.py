@@ -2,30 +2,32 @@ import tkinter as tk
 from functools import partial
 
 from custom.typing import DictVariable, Settings
+from window_settings_two.window import open_settings
 
 from .buttons_func import (command_add_chapter, command_extract,
                            command_move_files, command_shortcut)
 from .widgets import (add_chapters, comics_list, create_shortcut, extraction,
-                      move_images, tk_frame, tk_separators, tk_window)
+                      move_images, tk_frame, tk_separators, tk_window,
+                      window_settings)
 
 
 def open_main(settings: Settings):
     window = tk_window('tr_comic', '355x300')
-    mainframe = tk_frame(window, column=2, row=3)
-    tk_separators(mainframe, vertical=1, horizontal=2)
+    mainframe = tk_frame(window, column=2, row=4)
+    tk_separators(mainframe, vertical=1, horizontal=3)
 
     variable: DictVariable = {
         'comic': tk.StringVar(),
         'regime': tk.StringVar(value='copy'),
         'quantity': tk.IntVar(value=1),
-        'where_from': tk.StringVar(value=settings['editor']),
-        'where_to': tk.StringVar(value=settings['translate']),
-        'suffix': tk.StringVar(value='*.'),
+        'where_from': tk.StringVar(value=settings['move_images']['where']),
+        'where_to': tk.StringVar(value=settings['move_images']['to']),
+        'suffix': tk.StringVar(value='*.' + settings['move_images']['suffix']),
         'folders': tk.StringVar(value=settings['original'])
     }
 
     # Выпадающий список комиксов
-    combobox_list_comics = comics_list(
+    comics_list(
         mainframe,
         variable['comic'],
         settings['base_dir'],
@@ -98,6 +100,13 @@ def open_main(settings: Settings):
         variable['folders']
     )
     button_shortcut['command'] = function_shortcut
+
+    # Настройки
+    button_settings = window_settings(
+        mainframe, **{'column': 0, 'row': 3}
+    )
+    function_settings = partial(open_settings, window, settings)
+    button_settings['command'] = function_settings
 
     # Запуск окна
     window.mainloop()

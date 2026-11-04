@@ -23,9 +23,7 @@ class Folder(Path):
 
 
 class Chapter(Folder):
-    """
-    Глава комикса.
-    """
+    """Глава комикса."""
     @property
     def number(self) -> int | float:
         """Номер главы комикса в виде числа."""
@@ -42,6 +40,7 @@ class Chapter(Folder):
         return str(self.number).rjust(self.settings['length_number'], '0')
 
     def is_chapter(self) -> bool:
+        """Является ли этот путь главой комикса."""
         if (
             self.name not in self.union_folders
             and self.name[0].isdecimal()
@@ -52,10 +51,9 @@ class Chapter(Folder):
 
 
 class Comic(Folder):
-    """
-    Комикс.
-    """
+    """Комикс."""
     def is_comic(self) -> bool:
+        """Является ли этот путь комиксом."""
         if (
             self.name not in self.union_folders
             and self.is_dir()

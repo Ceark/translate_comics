@@ -8,14 +8,14 @@ from custom.typing import Settings, SettingsVar, WidgetsMain, WidgetsMainVar
 from manage_settings.save_settings import save_dict_settings
 
 
-def button_choose(string_var: tk.StringVar):
+def button_choose(variable: tk.StringVar):
     """
     Функция, которая спрашивает у пользователя каталог и вставляет полученное
     значение в переменную StrVar.
     """
     path = filedialog.askdirectory()
-    if not path == '.':
-        string_var.set(path)
+    if Path(path).is_dir():
+        variable.set(path)
 
 
 def update_settings(

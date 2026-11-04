@@ -34,7 +34,7 @@ def tk_separators(root: tk.Frame, vertical: int, horizontal: int):
         sep.grid(column=0, row=i, columnspan=2, sticky='swe')
     for i in range(vertical):
         sep = ttk.Separator(root, orient='vertical')
-        sep.grid(column=i, row=1, rowspan=2, sticky='nse')
+        sep.grid(column=i, row=1, rowspan=horizontal, sticky='nse')
 
 
 def comics_list(
@@ -155,3 +155,9 @@ def create_shortcut(
     )
     button_shortcut.grid(sticky='s', **kwargs)
     return button_shortcut
+
+
+def window_settings(root: tk.Frame, **kwargs):
+    button = ttk.Button(root, text='Настройки')
+    button.grid(**kwargs)
+    return button

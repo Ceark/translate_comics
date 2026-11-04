@@ -17,8 +17,8 @@ def save_dict_settings(path: Path, dct: Settings):
     """
     Сохранить словарь настроек как json-файл.
     """
-    with open(path, 'w', encoding='utf-8') as file:
+    with open(path, 'w', encoding='utf-8') as fl:
         json.dump(
-            dct, file, indent=4, ensure_ascii=False,
+            dct, fl, indent=4, ensure_ascii=False,
             default=default_for_path
         )
