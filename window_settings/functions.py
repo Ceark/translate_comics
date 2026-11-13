@@ -3,67 +3,44 @@ from pathlib import Path
 from tkinter import filedialog
 
 from constants import path_settings
-from custom.klass import Chapter
-from custom.typing import Settings, SettingsVar, WidgetsMain, WidgetsMainVar
+from custom.typing import MoveImagesSettings, Settings, SettingsVar
 from manage_settings.save_settings import save_dict_settings
 
 
-def button_choose(variable: tk.StringVar):
+def button_choose(string_var: tk.StringVar):
     """
     Функция, которая спрашивает у пользователя каталог и вставляет полученное
     значение в переменную StrVar.
     """
     path = filedialog.askdirectory()
-    if Path(path).is_dir():
-        variable.set(path)
+    if path == '':
+        return None
+    if not path == '.':
+        string_var.set(path)
 
 
 def update_settings(
         settings: Settings,
-        widgets_var: SettingsVar,
-        widgets_main: WidgetsMain,
-        widgets_main_var: WidgetsMainVar
+        variable: SettingsVar
 ):
     """
     Функция формирует новый словарь настроек, обновляет текущие настройки,
     сохраняет новый словарь настроек в файл, и обновляет виджеты главного окна.
     """
     new_settings = Settings(
-        base_dir=Path(widgets_var['base_dir'].get()),
-        original=widgets_var['original'].get(),
-        editor=widgets_var['editor'].get(),
-        translate=widgets_var['translate'].get(),
-        other_folder=widgets_var['other_folder'].get().split(', '),
-        delete=widgets_var['delete'].get(),
-        length_number=widgets_var['length_number'].get()
+        base_dir=Path(variable['base_dir'].get()),
+        original=variable['original'].get(),
+        editor=variable['editor'].get(),
+        translate=variable['translate'].get(),
+        other_folder=variable['other_folder'].get().split(', '),
+        ignore_folder=variable['ignore_folder'].get().split(', '),
+        delete=variable['delete'].get(),
+        length_number=variable['length_number'].get(),
+        move_images=MoveImagesSettings(
+            where=variable['move_images']['where'].get(),
+            to=variable['move_images']['to'].get(),
+            suffix=variable['move_images']['suffix'].get(),
+        )
     )
-    # Альтернативный вариант, но на него ругается MyPy
-    """
-    update_settings = {
-        key: widgets[key].get()
-        for key
-        in (Settings.__required_keys__)
-    }
-    update_settings['base_dir'] = Path(widgets['base_dir'].get())
-    update_settings['other_folder'] = widgets['other_folder'].get().split(', ')
-    """
     settings.update(new_settings)
     save_dict_settings(path=path_settings, dct=new_settings)
-
-    technical_folder = [
-        new_settings['original'],
-        new_settings['editor'],
-        new_settings['translate']
-    ] + new_settings['other_folder']
-    Chapter.update_technical_folder(technical_folder)
-
-    widgets_main['row_combobox']['values'] = [
-        value.name
-        for value
-        in Path(settings['base_dir']).iterdir()
-        if value.is_dir()
-    ]
-    if len(widgets_main['row_combobox']['values']):
-        widgets_main_var['row_combobox'].set(
-            widgets_main['row_combobox']['values'][0]
-        )

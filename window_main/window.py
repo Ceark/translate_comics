@@ -2,7 +2,7 @@ import tkinter as tk
 from functools import partial
 
 from custom.typing import DictVariable, Settings
-from window_settings_two.window import open_settings
+from window_settings.window import open_settings
 
 from .buttons_func import (command_add_chapter, command_extract,
                            command_move_files, command_shortcut)
