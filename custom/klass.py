@@ -10,6 +10,10 @@ def update_union(old_list: list[str], new_list: list[str]):
     old_list.extend(new_list)
 
 
+class IsNotChapterError(Exception):
+    pass
+
+
 class Folder(Path):
     """Заготовка папки."""
     technical_folders: list[str] = []
@@ -27,12 +31,11 @@ class Chapter(Folder):
     @property
     def number(self) -> int | float:
         """Номер главы комикса в виде числа."""
-        try:
-            pattern = re.compile(r'\d+(?:\.\d+)?')
+        if self.is_chapter():
+            pattern = re.compile(r'^\d+(?:\.\d+)?')
             number = pattern.match(self.name).group()
             return float(number) if '.' in number else int(number)
-        except AttributeError:
-            return 0
+        raise IsNotChapterError
 
     @property
     def rjust_number(self) -> str:
