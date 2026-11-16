@@ -1,6 +1,6 @@
-import re
 from pathlib import Path
 
+from constants import pattern
 from custom.typing import Settings
 
 
@@ -28,20 +28,6 @@ class Folder(Path):
 
 class Chapter(Folder):
     """Глава комикса."""
-    @property
-    def number(self) -> int | float:
-        """Номер главы комикса в виде числа."""
-        if self.is_chapter():
-            pattern = re.compile(r'^\d+(?:\.\d+)?')
-            number = pattern.match(self.name).group()
-            return float(number) if '.' in number else int(number)
-        raise IsNotChapterError
-
-    @property
-    def rjust_number(self) -> str:
-        """Номер главы комикса в виде строки с учетом length_number."""
-        return str(self.number).rjust(self.settings['length_number'], '0')
-
     def is_chapter(self) -> bool:
         """Является ли этот путь главой комикса."""
         if (
@@ -51,6 +37,19 @@ class Chapter(Folder):
         ):
             return True
         return False
+
+    @property
+    def number(self) -> int | float:
+        """Номер главы комикса в виде числа."""
+        if self.is_chapter():
+            number = pattern.match(self.name).group()
+            return float(number) if '.' in number else int(number)
+        raise IsNotChapterError
+
+    @property
+    def rjust_number(self) -> str:
+        """Номер главы комикса в виде строки с учетом length_number."""
+        return str(self.number).rjust(self.settings['length_number'], '0')
 
 
 class Comic(Folder):

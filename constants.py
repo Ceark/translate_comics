@@ -1,7 +1,9 @@
 from pathlib import Path
+from re import compile
 
 path_settings = Path('settings.json')
 path_site_and_selectors = Path('site_and_selectors')
+
 strings: list[str] = [
     'Комиксы',
     'Оригинал',
@@ -15,3 +17,5 @@ strings: list[str] = [
     'Куда',
     'Суффикс'
 ]
+
+pattern = compile(r'^\d+(?:\.\d+)?')
